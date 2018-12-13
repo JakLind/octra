@@ -41,7 +41,7 @@ import {OctraDropzoneComponent} from './core/gui/octra-dropzone/octra-dropzone.c
 import {LoadeditorDirective} from './core/shared/directive/loadeditor.directive';
 import {NewsComponent} from './core/gui/news/news.component';
 import {FaqComponent} from './core/gui/faq/faq.component';
-import {EditorWSignaldisplayComponent, LinearEditorComponent, TwoDEditorComponent} from './editors';
+import {DictaphoneEditorComponent, LinearEditorComponent, TwoDEditorComponent} from './editors';
 import {HelpComponent} from './core/gui/help/';
 import {NewEditorComponent} from './editors/new-editor/new-editor.component';
 import {HelpToolsComponent} from './core/gui/help-tools/';
@@ -51,7 +51,7 @@ import {AudioviewerConfig} from './media-components/components/audio/audioviewer
 import {MediaComponentsModule} from './media-components/media-components.module';
 import {TranscrEditorComponent} from './core/component/transcr-editor';
 import {Error404Component} from './core/gui/error404';
-//icons
+// icons
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {
@@ -87,7 +87,7 @@ import {
   faTrash,
   faWindowMaximize
 } from '@fortawesome/free-solid-svg-icons';
-//modules
+// modules
 import {ModalModule} from 'ngx-bootstrap';
 import {YesNoModalComponent} from './core/modals/yes-no-modal/yes-no-modal.component';
 import {ModalService} from './core/modals/modal.service';
@@ -99,7 +99,7 @@ import {faCopy, faTimesCircle} from '@fortawesome/free-regular-svg-icons';
 import {faCheckCircle} from '@fortawesome/free-regular-svg-icons/faCheckCircle';
 import {LoginInvalidModalComponent} from './core/modals/login-invalid-modal/login-invalid-modal.component';
 import {ErrorModalComponent} from './core/modals/error-modal/error-modal.component';
-import {ExportFilesModalComponent} from './core/modals/exported-files-modal/export-files-modal.component';
+import {ExportFilesModalComponent} from './core/modals/export-files-modal/export-files-modal.component';
 import {StatisticsModalComponent} from './core/modals/statistics-modal/statistics-modal.component';
 import {PromptModalComponent} from './core/modals/prompt-modal/prompt-modal.component';
 import {TranscriptionSendModalComponent} from './core/modals/transcription-send-modal/transcription-send-modal.component';
@@ -112,6 +112,8 @@ import {BrowserTestComponent} from './core/gui/browser-test/browser-test.compone
 import {NavbarService} from './core/gui/navbar/navbar.service';
 import {CompatibilityService} from './core/shared/service/compatibility.service';
 import {TranscriptionFeedbackComponent} from './core/gui/transcription-feedback/transcription-feedback.component';
+import {GuidelinesComponent} from './core/gui/guidelines/guidelines.component';
+import {InactivityModalComponent} from './core/modals/inactivity-modal/inactivity-modal.component';
 
 library.add(
   faSpinner, faCheck, faTimes, faTrash, faExclamationCircle, faInfoCircle, faDownload, faHeadphones, faPrint, faSearch, faExclamationTriangle,
@@ -124,7 +126,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 }
 
 export const EDITORS: any[] = [
-  EditorWSignaldisplayComponent,
+  DictaphoneEditorComponent,
   TwoDEditorComponent,
   LinearEditorComponent
 ];
@@ -174,8 +176,10 @@ export const ngmodule = {
     ShortcutsModalComponent,
     TranscriptionSuccessModalComponent,
     TranscriptionGuidelinesModalComponent,
+    GuidelinesComponent,
     BrowserTestComponent,
-    TranscriptionFeedbackComponent
+    TranscriptionFeedbackComponent,
+    InactivityModalComponent
   ],
   entryComponents: EDITORS,
   imports: [

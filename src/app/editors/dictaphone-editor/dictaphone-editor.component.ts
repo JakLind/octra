@@ -8,19 +8,18 @@ import {Segment} from '../../core/obj/Annotation/Segment';
 import {AudioManager} from '../../media-components/obj/media/audio/AudioManager';
 import {AudioChunk} from '../../media-components/obj/media/audio/AudioChunk';
 import {AudioTime} from '../../media-components/obj/media/audio/AudioTime';
-import {PlayBackState} from '../../media-components/obj/media/index';
 import {AudioNavigationComponent} from '../../media-components/components/audio/audio-navigation';
 import {AudioplayerComponent} from '../../media-components/components/audio/audioplayer';
 import {TranscrEditorComponent} from '../../core/component/transcr-editor';
 
 @Component({
   selector: 'app-audioplayer-gui',
-  templateUrl: './editor-w-signaldisplay.component.html',
-  styleUrls: ['./editor-w-signaldisplay.component.css']
+  templateUrl: './dictaphone-editor.component.html',
+  styleUrls: ['./dictaphone-editor.component.css']
 })
-export class EditorWSignaldisplayComponent implements OnInit, OnDestroy, AfterViewInit, OnChanges {
+export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewInit, OnChanges {
 
-  public static editorname = 'Editor without signal display';
+  public static editorname = 'Dictaphone Editor';
 
   public static initialized: EventEmitter<void> = new EventEmitter<void>();
 
@@ -73,20 +72,7 @@ export class EditorWSignaldisplayComponent implements OnInit, OnDestroy, AfterVi
     this.editor.Settings.responsive = this.settingsService.responsive.enabled;
     this.editor.Settings.special_markers.boundary = true;
 
-    EditorWSignaldisplayComponent.initialized.emit();
-
-    /* does not work
-    setInterval(() => {
-      if (this.audiochunk.isPlaying) {
-        const samples = this.audiochunk.playposition.samples;
-        let i: number = this.transcrService.currentlevel.segments.getSegmentBySamplePosition(samples);
-        if (i < 0) {
-          i = this.transcrService.currentlevel.segments.length - 1;
-        }
-        this.highlightSegment(i);
-      }
-    }, 500);
-    */
+    DictaphoneEditorComponent.initialized.emit();
   }
 
   ngAfterViewInit() {
@@ -179,19 +165,23 @@ export class EditorWSignaldisplayComponent implements OnInit, OnDestroy, AfterVi
     if (i > -1) {
       const start = (i > 0) ? this.transcrService.currentlevel.segments.get(i - 1).time.samples : 0;
 
-      this.audiochunk.stopPlayback(() => {
-        if (this.audiochunk.state === PlayBackState.STOPPED) {
-          this.audiochunk.startpos = new AudioTime(start, this.audiomanager.ressource.info.samplerate);
-          this.audiochunk.selection.end = this.transcrService.currentlevel.segments.get(i).time.clone();
-          this.audioplayer.update();
-
-          this.audioplayer.startPlayback(() => {
-            // set start pos and playback length to end of audio file
-            this.audiochunk.startpos = this.audiochunk.selection.end.clone();
-            this.audioplayer.update();
-          });
-          this.boundaryselected = false;
+      new Promise<void>((resolve) => {
+        if (this.audiochunk.isPlaying) {
+          this.audiochunk.stopPlayback(resolve);
+        } else {
+          resolve();
         }
+      }).then(() => {
+        this.audiochunk.startpos = new AudioTime(start, this.audiomanager.ressource.info.samplerate);
+        this.audiochunk.selection.end = this.transcrService.currentlevel.segments.get(i).time.clone();
+        this.audioplayer.update();
+
+        this.audioplayer.startPlayback(() => {
+          // set start pos and playback length to end of audio file
+          this.audiochunk.startpos = this.audiochunk.selection.end.clone();
+          this.audioplayer.update();
+        });
+        this.boundaryselected = false;
       });
     } else {
       this.boundaryselected = false;

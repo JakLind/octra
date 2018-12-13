@@ -71,14 +71,19 @@
     "supported files": "Supported files",
     "select one tier": "Select one tier",
     "prompt": "Prompt",
-    "feedback": "Feedback"
+    "feedback": "Feedback",
+    "skip silence": "skip silence",
+    "good": "Good",
+    "bad": "Bad",
+    "middle": "Middle",
+    "insert comment": "Insert comment here... (optional)",
+    "password": "Password"
   },
   "bug report": {
     "give feedback": "Give feedback",
     "description": "Please tell us what you are thinking about OCTRA. What can we do better? Did you find any bugs?",
     "sent": "Your bug was successfully reported.",
-    "send protocol": "Add Protocol (recommended)",
-    "protocol": "Protocol"
+    "send protocol": "Add Protocol (recommended)"
   },
   "transcription": {
     "start": "Continue transcription",
@@ -96,8 +101,7 @@
     "with breaks": "Segments with breaks",
     "not transcribed": "Segments without content",
     "previous": "previous segment",
-    "next": "next segment",
-    "no guidelines found": "No guidelines found"
+    "next": "next segment"
   },
   "feedback": {
     "unintelligible": "unintelligible",
@@ -111,7 +115,7 @@
     "no noises": "no noises"
   },
   "interfaces": {
-    "simple editor": "Editor without signal display",
+    "simple editor": "Dictaphone Editor",
     "linear editor": "Linear Editor",
     "2D editor": "2D-Editor"
   },
@@ -163,6 +167,13 @@
       "jump_last_segment": "Save & jump to previous segment",
       "jump_next_segment": "Save & jump to next segment",
       "close_save": "Save & close window"
+    },
+    "inactivity": {
+      "header": "Longer absence detected",
+      "body": "You were absent for at least {{value}} minutes without finishing OCTRA. It is recommended to exit OCTRA if longer absence is predictable. If you do not continue the transcription at the moment you can quit OCTRA now. What Do you want to do?",
+      "new": "Start new transcription",
+      "continue": "Continue transcription",
+      "quit": "Quit OCTRA"
     }
   },
   "login": {

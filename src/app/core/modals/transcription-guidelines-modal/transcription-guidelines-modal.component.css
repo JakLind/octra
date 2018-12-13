@@ -58,6 +58,12 @@ audio {
 
 .media {
     margin-bottom: 10px;
+    text-align: center;
+    display: block;
+}
+
+.media img {
+    max-width: 100%;
 }
 
 .card-header {
@@ -66,4 +72,18 @@ audio {
 
 .card-header.example {
     background-color: #84d5d3;
+}
+
+.modal-dialog.modal-lg {
+    max-width: 1200px;
+}
+
+.table td {
+    padding: 5px !important;
+    font-size: 0.9em;
+}
+
+.table thead td {
+    font-weight: bold;
+    text-align: center;
 }

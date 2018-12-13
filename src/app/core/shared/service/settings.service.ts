@@ -1,14 +1,12 @@
 import {EventEmitter, Injectable} from '@angular/core';
 
 import {SubscriptionManager} from '../';
-import {ProjectSettings} from '../../obj/Settings/project-configuration';
+import {AppSettings, ProjectSettings} from '../../obj/Settings';
 import {Subscription} from 'rxjs/Subscription';
 import {AppStorageService} from './appstorage.service';
 import {AudioService} from './audio.service';
-import {isFunction, isUndefined} from 'util';
 import {Logger} from '../Logger';
-import {AppSettings} from '../../obj/Settings/app-settings';
-import {Functions} from '../Functions';
+import {Functions, isNullOrUndefined} from '../Functions';
 import {Observable} from 'rxjs/Observable';
 import {ReplaySubject} from 'rxjs/ReplaySubject';
 import {AudioManager} from '../../../media-components/obj/media/audio/AudioManager';
@@ -21,16 +19,143 @@ import {ActivatedRoute} from '@angular/router';
 
 @Injectable()
 export class SettingsService {
+
+  get validated(): boolean {
+    return this.validation.app;
+  }
+
+  get responsive(): {
+    enabled: boolean,
+    fixedwidth: number
+  } {
+    if (!(this.projectsettings === null || this.projectsettings === undefined)
+      && !(this.projectsettings.responsive === null || this.projectsettings.responsive === undefined)) {
+      return this.projectsettings.responsive;
+
+    } else {
+      return this.app_settings.octra.responsive;
+    }
+  }
+
+  get projectsettings(): ProjectSettings {
+    return this._projectsettings;
+  }
+
+  get app_settings(): AppSettings {
+    return this._app_settings;
+  }
+
+  get guidelines(): any {
+    return this._guidelines;
+  }
+
+  get loaded(): boolean {
+    return this._loaded;
+  }
+
+  set loaded(value: boolean) {
+    this._loaded = value;
+  }
+
+  get log(): string {
+    return this._log;
+  }
+
+  set log(value: string) {
+    this._log = value;
+  }
+
+  get filename(): string {
+    return this._filename;
+  }
+
+  get validationmethod(): (string, any) => any[] {
+    return this._validationmethod;
+  }
+
+  get tidyUpMethod(): (string, any) => string {
+    return this._tidyUpMethod;
+  }
+
+  public get allloaded(): boolean {
+    return (
+      !(this.projectsettings === null || this.projectsettings === undefined)
+    );
+  }
+
+  get isDBLoadded(): boolean {
+    return this._isDBLoadded;
+  }
+
+  constructor(private http: HttpClient,
+              private appStorage: AppStorageService, private api: APIService, private langService: TranslateService) {
+    this.subscrmanager = new SubscriptionManager();
+  }
+
   public dbloaded = new EventEmitter<any>();
   public app_settingsloaded: EventEmitter<boolean> = new EventEmitter<boolean>();
   public projectsettingsloaded: EventEmitter<any> = new EventEmitter<any>();
   public validationmethodloaded = new EventEmitter<void>();
   public audioloaded: EventEmitter<any> = new EventEmitter<any>();
   public guidelinesloaded = new EventEmitter<any>();
+  private test: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
+  public settingsloaded: Observable<boolean> = this.test.asObservable();
+  private subscrmanager: SubscriptionManager;
+  private validation: any = {
+    app: false
+  };
+
+  private _projectsettings: ProjectSettings;
+
+  private _app_settings: AppSettings;
+
+  private _guidelines: any;
+
+  private _loaded = false;
+
+  private _log = '';
+
+  private _filename: string;
+
+  private _validationmethod: (string, any) => any[] = null;
+
+  private _tidyUpMethod: (string, any) => string = null;
+
+  private _isDBLoadded = false;
+
+  public static queryParamsSet(route: ActivatedRoute): boolean {
+    const params = route.snapshot.queryParams;
+    return (
+      params.hasOwnProperty('audio') &&
+      params.hasOwnProperty('embedded')
+    );
+  }
+
+  public static validateJSON(filename: string, json: any, schema: any): boolean {
+    if (!(json === null || json === undefined) && !(schema === null || schema === undefined)) {
+      const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
+      const validate = ajv.compile(schema);
+      const valid = validate(json);
+      if (!valid) {
+        for (const err in validate.errors) {
+          if (validate.errors.hasOwnProperty(err)) {
+            const err_obj: any = (validate.errors['' + err + '']);
+            if (err_obj.hasOwnProperty('dataPath') && !(err_obj.dataPath === null || err_obj.dataPath === undefined)) {
+              Logger.err(`JSON Validation Error (${filename}): ${err_obj.dataPath} ${err_obj.message}`);
+            }
+          }
+        }
+      } else {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public loadDB = (appRoute: ActivatedRoute) => {
 
     // check for Updates
-    if (this.queryParamsSet(appRoute)) {
+    if (SettingsService.queryParamsSet(appRoute)) {
       // URL MODE, overwrite db name with 'url'
       this.app_settings.octra.database.name = 'url';
     } else {
@@ -40,7 +165,8 @@ export class SettingsService {
     umanager.checkForUpdates(this.app_settings.octra.database.name).then((idb) => {
 
       const audio_url = appRoute.snapshot.queryParams['audio'];
-      const transcript_url = (appRoute.snapshot.queryParams['transcript'] !== undefined) ? appRoute.snapshot.queryParams['transcript'] : null;
+      const transcript_url = (appRoute.snapshot.queryParams['transcript'] !== undefined)
+        ? appRoute.snapshot.queryParams['transcript'] : null;
       const embedded = appRoute.snapshot.queryParams['embedded'];
 
       this.appStorage.url_params['audio'] = audio_url;
@@ -58,18 +184,18 @@ export class SettingsService {
 
           // check if browser language is available in translations
           if ((this.appStorage.language === null || this.appStorage.language === undefined) || this.appStorage.language === '') {
-            if (!isUndefined(this.langService.getLangs().find((value) => {
+            if ((this.langService.getLangs().find((value) => {
               return value === browser_lang;
-            }))) {
+            })) !== undefined) {
               this.langService.use(browser_lang);
             } else {
               // use first language defined as default language
               this.langService.use(languages[0]);
             }
           } else {
-            if (!isUndefined(this.langService.getLangs().find((value) => {
+            if ((this.langService.getLangs().find((value) => {
               return value === this.appStorage.language;
-            }))) {
+            })) !== undefined) {
               this.langService.use(this.appStorage.language);
             } else {
               this.langService.use(languages[0]);
@@ -77,7 +203,7 @@ export class SettingsService {
           }
 
           // if url mode, set it in options
-          if (this.queryParamsSet(appRoute)) {
+          if (SettingsService.queryParamsSet(appRoute)) {
             this.appStorage.usemode = 'url';
             this.appStorage.LoggedIn = true;
           }
@@ -106,32 +232,38 @@ export class SettingsService {
       this.dbloaded.error(error);
       console.error(error.target.error);
     });
-  };
-  public loadProjectSettings = () => {
-    this.loadSettings(
-      {
-        loading: 'Load project Settings...'
-      },
-      {
-        json: './config/localmode/projectconfig.json',
-        schema: './schemata/projectconfig.schema.json'
-      },
-      {
-        json: 'projectconfig.json',
-        schema: 'projectconfig.schema.json'
-      },
-      (result: ProjectSettings) => {
-        this._projectsettings = result;
-      },
-      () => {
-        Logger.log('Projectconfig loaded.');
-        this.projectsettingsloaded.emit(this._projectsettings);
-      },
-      (error) => {
-        Logger.err(error);
-      }
-    );
-  };
+  }
+
+  public loadProjectSettings: () => Promise<void> = () => {
+    return new Promise<void>((resolve, reject) => {
+      this.loadSettings(
+        {
+          loading: 'Load project Settings...'
+        },
+        {
+          json: './config/localmode/projectconfig.json',
+          schema: './schemata/projectconfig.schema.json'
+        },
+        {
+          json: 'projectconfig.json',
+          schema: 'projectconfig.schema.json'
+        },
+        (result: ProjectSettings) => {
+          this._projectsettings = result;
+        },
+        () => {
+          Logger.log('Projectconfig loaded.');
+          resolve();
+          this.projectsettingsloaded.emit(this._projectsettings);
+        },
+        (error) => {
+          Logger.err(error);
+          reject(error);
+        }
+      );
+    });
+  }
+
   public loadGuidelines = (language: string, url: string) => {
     this.loadSettings(
       {
@@ -157,13 +289,13 @@ export class SettingsService {
         Logger.err(error);
       }
     );
-  };
+  }
   public loadValidationMethod: ((url: string) => Subscription) = (url: string) => {
     Logger.log('Load methods...');
     return Functions.uniqueHTTPRequest(this.http, false, {
       responseType: 'text'
     }, url, null).subscribe(
-      (response) => {
+      () => {
         const js = document.createElement('script');
 
         js.type = 'text/javascript';
@@ -171,8 +303,8 @@ export class SettingsService {
         js.id = 'validationJS';
         js.onload = () => {
           if (
-            (typeof validateAnnotation !== 'undefined') && isFunction(validateAnnotation) &&
-            (typeof tidyUpAnnotation !== 'undefined') && isFunction(tidyUpAnnotation)
+            (typeof validateAnnotation !== 'undefined') && typeof validateAnnotation === 'function' &&
+            (typeof tidyUpAnnotation !== 'undefined') && typeof tidyUpAnnotation === 'function'
           ) {
             this._validationmethod = validateAnnotation;
             this._tidyUpMethod = tidyUpAnnotation;
@@ -184,12 +316,12 @@ export class SettingsService {
         };
         document.body.appendChild(js);
       },
-      (error) => {
+      () => {
         console.error('Loading functions failed [Error: S01]');
         this.validationmethodloaded.emit();
       }
     );
-  };
+  }
   public loadAudioFile: ((audioService: AudioService) => void) = (audioService: AudioService) => {
     Logger.log('Load audio file 2...');
     if ((this.appStorage.usemode === null || this.appStorage.usemode === undefined)) {
@@ -206,7 +338,6 @@ export class SettingsService {
         }
         // extract filename
         this._filename = this.appStorage.audio_url.substr(this.appStorage.audio_url.lastIndexOf('/') + 1);
-        const fullname = this._filename;
         this._filename = this._filename.substr(0, this._filename.lastIndexOf('.'));
         if (this._filename.indexOf('src=') > -1) {
           this._filename = this._filename.substr(this._filename.indexOf('src=') + 4);
@@ -216,8 +347,7 @@ export class SettingsService {
           Logger.log('Audio loaded.');
 
           this.audioloaded.emit({status: 'success'});
-        }, (err) => {
-          const errMsg = err;
+        }, () => {
           this._log += 'Loading audio file failed<br/>';
         });
       } else {
@@ -258,107 +388,12 @@ export class SettingsService {
         console.error('session file is null.');
       }
     }
-  };
-  private test: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
-  public settingsloaded: Observable<boolean> = this.test.asObservable();
-  private subscrmanager: SubscriptionManager;
-  private validation: any = {
-    app: false
-  };
+  }
   private triggerSettingsLoaded = () => {
     if (this.validated) {
       this.loaded = true;
       this.test.next(true);
     }
-  };
-
-  get validated(): boolean {
-    return this.validation.app;
-  }
-
-  get responsive(): {
-    enabled: boolean,
-    fixedwidth: number
-  } {
-    if (!(this.projectsettings === null || this.projectsettings === undefined) && !(this.projectsettings.responsive === null || this.projectsettings.responsive === undefined)) {
-      return this.projectsettings.responsive;
-
-    } else {
-      return this.app_settings.octra.responsive;
-    }
-  }
-
-  private _projectsettings: ProjectSettings;
-
-  get projectsettings(): ProjectSettings {
-    return this._projectsettings;
-  }
-
-  private _app_settings: AppSettings;
-
-  get app_settings(): AppSettings {
-    return this._app_settings;
-  }
-
-  private _guidelines: any;
-
-  get guidelines(): any {
-    return this._guidelines;
-  }
-
-  private _loaded = false;
-
-  get loaded(): boolean {
-    return this._loaded;
-  }
-
-  set loaded(value: boolean) {
-    this._loaded = value;
-  }
-
-  private _log = '';
-
-  get log(): string {
-    return this._log;
-  }
-
-  set log(value: string) {
-    this._log = value;
-  }
-
-  private _filename: string;
-
-  get filename(): string {
-    return this._filename;
-  }
-
-  private _validationmethod: (string, any) => any[] = null;
-
-  get validationmethod(): (string, any) => any[] {
-    return this._validationmethod;
-  }
-
-  private _tidyUpMethod: (string, any) => string = null;
-
-  get tidyUpMethod(): (string, any) => string {
-    return this._tidyUpMethod;
-  }
-
-  public get allloaded(): boolean {
-    return (
-      !(this.projectsettings === null || this.projectsettings === undefined)
-    );
-  }
-
-  private _isDBLoadded = false;
-
-  get isDBLoadded(): boolean {
-    return this._isDBLoadded;
-  }
-
-  constructor(private http: HttpClient,
-              private appStorage: AppStorageService, private api: APIService, private langService: TranslateService) {
-    this.subscrmanager = new SubscriptionManager();
   }
 
   public loadApplicationSettings(appRoute: ActivatedRoute): Promise<void> {
@@ -413,33 +448,6 @@ export class SettingsService {
     this._tidyUpMethod = null;
   }
 
-  queryParamsSet(route: ActivatedRoute): boolean {
-    const params = route.snapshot.queryParams;
-    return (
-      params.hasOwnProperty('audio') &&
-      params.hasOwnProperty('embedded')
-    );
-  }
-
-  private validateJSON(filename: string, json: any, schema: any): boolean {
-    if (!(json === null || json === undefined) && !(schema === null || schema === undefined)) {
-      const ajv = new Ajv(); // options can be passed, e.g. {allErrors: true}
-      const validate = ajv.compile(schema);
-      const valid = validate(json);
-      if (!valid) {
-        for (const err in validate.errors) {
-          if (validate.errors.hasOwnProperty(err)) {
-            const err_obj = (validate.errors['' + err + '']);
-            Logger.err(`JSON Validation Error (${filename}): ${err_obj.dataPath} ${err_obj.message}`);
-          }
-        }
-      } else {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private loadSettings(messages: any, urls: any, filenames: any, onhttpreturn: (any) => void, onvalidated: () => void,
                        onerror: (error: string) => void) {
     if (
@@ -456,7 +464,7 @@ export class SettingsService {
             (schema) => {
               Logger.log(filenames.json + ' schema file loaded');
 
-              const validation_ok = this.validateJSON(filenames.json, appsettings, schema);
+              const validation_ok = SettingsService.validateJSON(filenames.json, appsettings, schema);
 
               if (validation_ok) {
                 onvalidated();
@@ -475,5 +483,19 @@ export class SettingsService {
     } else {
       throw new Error('parameters of loadSettings() are not correct.');
     }
+  }
+
+  /**
+   * checks jif the specific theme is active
+   * @param theme
+   */
+  public isTheme(theme: string) {
+    const selectedTheme = (
+      isNullOrUndefined(this.projectsettings.octra)
+      || isNullOrUndefined(this.projectsettings.octra.theme)
+    )
+      ? 'default' : this.projectsettings.octra.theme;
+
+    return (selectedTheme === theme);
   }
 }

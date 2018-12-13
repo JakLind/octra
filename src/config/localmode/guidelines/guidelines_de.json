@@ -103,21 +103,21 @@
           "code": "M02",
           "priority": 100,
           "title": "Nonverbale Sprechergeräusche",
-          "description": "Nonverbale Sprechergeräusche wie Husten, Lachen, Schmatzen usw. werden mit <usb> und Leerzeichen vor jedem betroffenen Wort markiert. ",
+          "description": "Nonverbale Sprechergeräusche wie Husten, Lachen, Schmatzen usw. werden mit {{<usb>}} und Leerzeichen vor jedem betroffenen Wort markiert. ",
           "examples": []
         },
         {
           "code": "M02",
           "priority": 100,
           "title": "Andere Geräusche",
-          "description": "Geräusche, die nicht vom Sprecher stammen, z.B. Türschlagen, Klopfen, Motoren, werden mit <nib> und Leerzeichen vor dem betroffenen Wort markiert. ",
+          "description": "Geräusche, die nicht vom Sprecher stammen, z.B. Türschlagen, Klopfen, Motoren, werden mit {{<nib>}} und Leerzeichen vor dem betroffenen Wort markiert. ",
           "examples": []
         },
         {
           "code": "M03",
           "priority": 100,
           "title": "Weitere Sprecher",
-          "description": "Sprache eines dritten Sprechers wird mit ** (mit Leerzeichen von den benachbarten Wörtern getrennt) markiert, ebenso unverständliche Passagen.",
+          "description": "Sprache eines dritten Sprechers wird mit {{**}} (mit Leerzeichen von den benachbarten Wörtern getrennt) markiert, ebenso unverständliche Passagen.",
           "examples": []
         },
         {

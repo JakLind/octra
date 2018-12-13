@@ -5,7 +5,7 @@ import {LoginService} from './login.service';
 import {APIService, AppStorageService, AudioService, OIDBLevel, OIDBLink, SettingsService} from '../../shared/service';
 import {ComponentCanDeactivate} from './login.deactivateguard';
 import {Observable} from 'rxjs/Observable';
-import {FileSize, Functions, OCTRANIMATIONS, SubscriptionManager} from '../../shared';
+import {OCTRANIMATIONS, SubscriptionManager} from '../../shared';
 import {SessionFile} from '../../obj/SessionFile';
 import {TranslateService} from '@ngx-translate/core';
 import {Converter} from '../../obj/Converters';
@@ -14,6 +14,9 @@ import 'rxjs/add/operator/catch';
 import {ModalService} from '../../modals/modal.service';
 import {ModalDeleteAnswer} from '../../modals/transcription-delete-modal/transcription-delete-modal.component';
 import {AppInfo} from '../../../app.info';
+import {FileSize, Functions, isNullOrUndefined} from '../../shared/Functions';
+import {sha256} from 'js-sha256';
+import {throwError} from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -60,14 +63,15 @@ export class LoginComponent implements OnInit, OnDestroy, ComponentCanDeactivate
     id: '',
     agreement: '',
     project: '',
-    jobno: ''
+    jobno: '',
+    password: ''
   };
   err = '';
   private subscrmanager: SubscriptionManager;
   onOfflineSubmit = () => {
     if (!(this.appStorage.data_id === null || this.appStorage.data_id === undefined) && typeof this.appStorage.data_id === 'number') {
       // last was online mode
-      this.setOnlineSessionToFree(() => {
+      this.api.setOnlineSessionToFree(this.appStorage).then(() => {
         this.audioService.registerAudioManager(this.dropzone.audiomanager);
         this.appStorage.beginLocalSession(this.dropzone.files, false, () => {
           if (!(this.dropzone.oannotation === null || this.dropzone.oannotation === undefined)) {
@@ -96,6 +100,8 @@ export class LoginComponent implements OnInit, OnDestroy, ComponentCanDeactivate
         }, (error) => {
           alert(error);
         });
+      }).catch((error) => {
+        console.error(error);
       });
     } else {
       this.audioService.registerAudioManager(this.dropzone.audiomanager);
@@ -166,27 +172,6 @@ export class LoginComponent implements OnInit, OnDestroy, ComponentCanDeactivate
   private navigate = (): void => {
     Functions.navigateTo(this.router, ['user'], AppInfo.queryParamsHandling);
   }
-  private setOnlineSessionToFree = (callback: () => void) => {
-    // check if old annotation is already annotated
-    this.subscrmanager.add(this.api.fetchAnnotation(this.appStorage.data_id).subscribe(
-      (json) => {
-        if (!(json.data === null || json.data === undefined) && json.data.hasOwnProperty('status') && json.data.status === 'BUSY') {
-          this.subscrmanager.add(this.api.closeSession(this.appStorage.user.id, this.appStorage.data_id, '').subscribe(
-            (result2) => {
-              callback();
-            }
-          ));
-        } else {
-          callback();
-        }
-      },
-      (err) => {
-        // ignore error because this isn't important
-        console.error(err);
-        callback();
-      }
-    ));
-  }
 
   ngOnInit() {
     if (this.settingsService.responsive.enabled === false) {
@@ -233,7 +218,11 @@ export class LoginComponent implements OnInit, OnDestroy, ComponentCanDeactivate
         }));
       }
     }).then(() => {
-      this.loadPojectsList();
+      this.settingsService.loadProjectSettings().then(() => {
+        this.loadPojectsList();
+      }).catch((error) => {
+        console.error(error);
+      });
     });
 
   }
@@ -250,103 +239,147 @@ export class LoginComponent implements OnInit, OnDestroy, ComponentCanDeactivate
     let new_session_after_old = false;
     let continue_session = false;
 
-    if ((this.member.jobno === null || this.member.jobno === undefined) || this.member.jobno === '') {
-      this.member.jobno = '0';
-    }
-
-    if (this.appStorage.sessionfile !== null) {
-      // last was offline mode, begin new Session
-      new_session = true;
-
+    if (!this.isPasswordCorrect(this.member.project, this.member.password)) {
+      this.modService.show('login_invalid');
     } else {
-      if (!(this.appStorage.data_id === null || this.appStorage.data_id === undefined) && typeof this.appStorage.data_id === 'number') {
-        // last session was online session
-        // check if credentials are available
-        if (
-          !(this.appStorage.user.project === null || this.appStorage.user.project === undefined) &&
-          !(this.appStorage.user.jobno === null || this.appStorage.user.jobno === undefined) &&
-          !(this.appStorage.user.id === null || this.appStorage.user.id === undefined)
-        ) {
-          // check if credentials are the same like before
-          if (
-            this.appStorage.user.id === this.member.id &&
-            Number(this.appStorage.user.jobno) === Number(this.member.jobno) &&
-            this.appStorage.user.project === this.member.project
-          ) {
-            continue_session = true;
-          } else {
-            new_session_after_old = true;
-          }
-        }
-      } else {
-        new_session = true;
+
+      if ((this.member.jobno === null || this.member.jobno === undefined) || this.member.jobno === '') {
+        this.member.jobno = '0';
       }
-    }
 
-    if (new_session_after_old) {
-      this.setOnlineSessionToFree(
-        () => {
-          this.createNewSession(form);
-        }
-      );
-    }
+      if (this.appStorage.sessionfile !== null) {
+        // last was offline mode, begin new Session
+        new_session = true;
 
-    if (new_session) {
-      this.createNewSession(form);
-    } else if (continue_session) {
-      this.subscrmanager.add(this.api.fetchAnnotation(this.appStorage.data_id).subscribe(
-        (json) => {
-          if (json.hasOwnProperty('message')) {
-            const counter = (json.message === '') ? '0' : json.message;
-            this.appStorage.sessStr.store('jobs_left', Number(counter));
-          }
-
-          if (form.valid && this.agreement_checked
-            && json.message !== '0'
+      } else {
+        if (!(this.appStorage.data_id === null || this.appStorage.data_id === undefined) && typeof this.appStorage.data_id === 'number') {
+          // last session was online session
+          // check if credentials are available
+          if (
+            !(this.appStorage.user.project === null || this.appStorage.user.project === undefined) &&
+            !(this.appStorage.user.jobno === null || this.appStorage.user.jobno === undefined) &&
+            !(this.appStorage.user.id === null || this.appStorage.user.id === undefined)
           ) {
-            if (this.appStorage.sessionfile !== null) {
-              // last was offline mode
-              this.appStorage.clearLocalStorage().catch((err) => {
-                console.error(err);
-              });
-            }
-
-            if (this.appStorage.usemode === 'online' && json.data.hasOwnProperty('prompt') || json.data.hasOwnProperty('prompttext')) {
-              // get transcript data that already exists
-              if (json.data.hasOwnProperty('prompt')) {
-                const prompt = json.data.prompt;
-
-                if (prompt) {
-                  this.appStorage.prompttext = prompt;
-                }
-              } else if (json.data.hasOwnProperty('prompttext')) {
-                const prompt = json.data.prompttext;
-
-                if (prompt) {
-                  this.appStorage.prompttext = prompt;
-                }
-              }
+            // check if credentials are the same like before
+            if (
+              this.appStorage.user.id === this.member.id &&
+              Number(this.appStorage.user.jobno) === Number(this.member.jobno) &&
+              this.appStorage.user.project === this.member.project
+            ) {
+              continue_session = true;
             } else {
-              this.appStorage.prompttext = '';
+              new_session_after_old = true;
             }
-
-            const res = this.appStorage.setSessionData(this.member, json.data.id, json.data.url);
-            if (res.error === '') {
-              this.navigate();
-            } else {
-              alert(res.error);
-            }
-          } else {
-            this.modService.show('login_invalid');
           }
-        },
-        (error) => {
-          this.modService.show('error', {
-            text: 'Server cannot be requested. Please check if you are online.'
-          });
-          console.error(error);
+        } else {
+          new_session = true;
         }
-      ));
+      }
+
+      if (new_session_after_old) {
+        this.api.setOnlineSessionToFree(this.appStorage).then(() => {
+          this.createNewSession(form);
+        }).catch((error) => {
+          console.error(error);
+        });
+      }
+
+      if (new_session) {
+        this.createNewSession(form);
+      } else if (continue_session) {
+        if (this.settingsService.isTheme('shortAudioFiles')) {
+          // create new session
+
+          // check if annotation is annotated
+          new Promise<void>((resolve, reject) => {
+            if (!isNullOrUndefined(this.appStorage.data_id)) {
+              this.api.fetchAnnotation(this.appStorage.data_id).then((entry) => {
+                if (entry.data.status === 'ANNOTATED' || entry.data.status === 'FREE') {
+                  resolve();
+                } else {
+                  // reset annotation
+                  this.api.closeSession(this.member.id, this.appStorage.data_id, '').then(() => {
+                    resolve();
+                  }).catch(() => {
+                    // ignore error
+                    resolve();
+                  });
+                }
+              }).catch((error) => {
+                reject(error);
+              });
+            } else {
+              resolve();
+            }
+          }).then(() => {
+            // all prepared, create new session
+            this.createNewSession(form);
+          }).catch((error) => {
+            console.error(error);
+          });
+        } else {
+          this.api.fetchAnnotation(this.appStorage.data_id).then((json) => {
+
+            if (isNullOrUndefined(json.data)) {
+              // job doesn't exist anymore
+              this.createNewSession(form);
+            } else {
+              // continue job
+
+              if (json.hasOwnProperty('message')) {
+                const counter = (json.message === '') ? '0' : json.message;
+                this.appStorage.sessStr.store('jobs_left', Number(counter));
+              }
+
+              if (form.valid && this.agreement_checked
+                && json.message !== '0'
+              ) {
+                if (this.appStorage.sessionfile !== null) {
+                  // last was offline mode
+                  this.appStorage.clearLocalStorage().catch((err) => {
+                    console.error(err);
+                  });
+                }
+
+                if (this.appStorage.usemode === 'online'
+                  && (json.data.hasOwnProperty('prompt')
+                    || json.data.hasOwnProperty('prompttext'))) {
+                  // get transcript data that already exists
+                  if (json.data.hasOwnProperty('prompt')) {
+                    const prompt = json.data.prompt;
+
+                    if (prompt) {
+                      this.appStorage.prompttext = prompt;
+                    }
+                  } else if (json.data.hasOwnProperty('prompttext')) {
+                    const prompt = json.data.prompttext;
+
+                    if (prompt) {
+                      this.appStorage.prompttext = prompt;
+                    }
+                  }
+                } else {
+                  this.appStorage.prompttext = '';
+                }
+
+                const res = this.appStorage.setSessionData(this.member, this.appStorage.data_id, this.appStorage.audio_url);
+                if (res.error === '') {
+                  this.navigate();
+                } else {
+                  alert(res.error);
+                }
+              } else {
+                this.modService.show('login_invalid');
+              }
+            }
+          }).catch((error) => {
+            this.modService.show('error', {
+              text: 'Server cannot be requested. Please check if you are online.'
+            });
+            console.error(error);
+          });
+        }
+      }
     }
   }
 
@@ -399,37 +432,36 @@ export class LoginComponent implements OnInit, OnDestroy, ComponentCanDeactivate
   }
 
   loadPojectsList() {
-    this.subscrmanager.add(this.api.getProjects().subscribe((json) => {
-        if (Array.isArray(json.data)) {
-          this.projects = json.data;
+    this.api.getProjects().then((json) => {
+      if (Array.isArray(json.data)) {
+        this.projects = json.data;
 
-          if (!(this.settingsService.app_settings.octra.allowed_projects === null ||
-            this.settingsService.app_settings.octra.allowed_projects === undefined)
-            && this.settingsService.app_settings.octra.allowed_projects.length > 0) {
-            // filter disabled projects
-            this.projects = this.projects.filter((a) => {
-              return (this.settingsService.app_settings.octra.allowed_projects.findIndex((b) => {
-                return a === b.name;
-              }) > -1);
+        if (!(this.settingsService.app_settings.octra.allowed_projects === null ||
+          this.settingsService.app_settings.octra.allowed_projects === undefined)
+          && this.settingsService.app_settings.octra.allowed_projects.length > 0) {
+          // filter disabled projects
+          this.projects = this.projects.filter((a) => {
+            return (this.settingsService.app_settings.octra.allowed_projects.findIndex((b) => {
+              return a === b.name;
+            }) > -1);
+          });
+        }
+        if (!(this.appStorage.user === null || this.appStorage.user === undefined) &&
+          !(this.appStorage.user.project === null || this.appStorage.user.project === undefined) && this.appStorage.user.project !== '') {
+
+          const found = this.projects.find(
+            (x) => {
+              return x === this.appStorage.user.project;
             });
-          }
-          if (!(this.appStorage.user === null || this.appStorage.user === undefined) &&
-            !(this.appStorage.user.project === null || this.appStorage.user.project === undefined) && this.appStorage.user.project !== '') {
-
-            const found = this.projects.find(
-              (x) => {
-                return x === this.appStorage.user.project;
-              });
-            if ((found === null || found === undefined)) {
-              // make sure that old project is in list
-              this.projects.push(this.appStorage.user.project);
-            }
+          if ((found === null || found === undefined)) {
+            // make sure that old project is in list
+            this.projects.push(this.appStorage.user.project);
           }
         }
-      },
-      (error) => {
-        console.error(`ERROR: could not load list of projects:\n${error}`);
-      }));
+      }
+    }).catch((error) => {
+      console.error(`ERROR: could not load list of projects:\n${error}`);
+    });
   }
 
   public selectProject(event: HTMLSelectElement) {
@@ -456,81 +488,80 @@ export class LoginComponent implements OnInit, OnDestroy, ComponentCanDeactivate
   }
 
   private createNewSession(form: NgForm) {
-    this.subscrmanager.add(this.api.beginSession(this.member.project, this.member.id, Number(this.member.jobno)).catch((error) => {
-      alert('Server cannot be requested. Please check if you are online.');
-      return Observable.throw(error);
-    }).subscribe(
-      (json) => {
-        if (form.valid && this.agreement_checked
-          && json.message !== '0'
-        ) {
+    this.api.beginSession(this.member.project, this.member.id, Number(this.member.jobno)).then((json) => {
 
-          // delete old data for fresh new session
-          this.appStorage.clearSession();
-          this.appStorage.clearLocalStorage().then(
-            () => {
-              const res = this.appStorage.setSessionData(this.member, json.data.id, json.data.url);
+      if (form.valid && this.agreement_checked
+        && json.message !== '0'
+      ) {
 
-              // get transcript data that already exists
-              if (json.data.hasOwnProperty('transcript')) {
-                const transcript = JSON.parse(json.data.transcript);
+        // delete old data for fresh new session
+        this.appStorage.clearSession();
+        this.appStorage.clearLocalStorage().then(
+          () => {
+            const res = this.appStorage.setSessionData(this.member, json.data.id, json.data.url);
 
-                if (Array.isArray(transcript) && transcript.length > 0) {
-                  this.appStorage.servertranscipt = transcript;
-                }
-              }
+            // get transcript data that already exists
+            if (json.data.hasOwnProperty('transcript')) {
+              const transcript = JSON.parse(json.data.transcript);
 
-              if (this.appStorage.usemode === 'online' && json.data.hasOwnProperty('prompt') || json.data.hasOwnProperty('prompttext')) {
-                // get transcript data that already exists
-                if (json.data.hasOwnProperty('prompt')) {
-                  const prompt = json.data.prompt;
-
-                  if (prompt) {
-                    this.appStorage.prompttext = prompt;
-                  }
-                } else if (json.data.hasOwnProperty('prompttext')) {
-                  const prompt = json.data.prompttext;
-
-                  if (prompt) {
-                    this.appStorage.prompttext = prompt;
-                  }
-                }
-              } else {
-                this.appStorage.prompttext = '';
-              }
-
-              if (this.appStorage.usemode === 'online' && json.data.hasOwnProperty('comment') || json.data.hasOwnProperty('comment')) {
-                // get transcript data that already exists
-                if (json.data.hasOwnProperty('comment')) {
-                  const comment = json.data.comment;
-
-                  if (comment) {
-                    this.appStorage.servercomment = comment;
-                  }
-                }
-              } else {
-                this.appStorage.servercomment = '';
-              }
-
-              if (json.hasOwnProperty('message')) {
-                const counter = (json.message === '') ? '0' : json.message;
-                this.appStorage.sessStr.store('jobs_left', Number(counter));
-              }
-
-              if (res.error === '') {
-                this.navigate();
-              } else {
-                this.modService.show('error', res.error);
+              if (Array.isArray(transcript) && transcript.length > 0) {
+                this.appStorage.servertranscipt = transcript;
               }
             }
-          ).catch((err) => {
-            console.error(err);
-          });
-        } else {
-          this.modService.show('login_invalid');
-        }
+
+            if (this.appStorage.usemode === 'online' && json.data.hasOwnProperty('prompt') || json.data.hasOwnProperty('prompttext')) {
+              // get transcript data that already exists
+              if (json.data.hasOwnProperty('prompt')) {
+                const prompt = json.data.prompt;
+
+                if (prompt) {
+                  this.appStorage.prompttext = prompt;
+                }
+              } else if (json.data.hasOwnProperty('prompttext')) {
+                const prompt = json.data.prompttext;
+
+                if (prompt) {
+                  this.appStorage.prompttext = prompt;
+                }
+              }
+            } else {
+              this.appStorage.prompttext = '';
+            }
+
+            if (this.appStorage.usemode === 'online' && json.data.hasOwnProperty('comment') || json.data.hasOwnProperty('comment')) {
+              // get transcript data that already exists
+              if (json.data.hasOwnProperty('comment')) {
+                const comment = json.data.comment;
+
+                if (comment) {
+                  this.appStorage.servercomment = comment;
+                }
+              }
+            } else {
+              this.appStorage.servercomment = '';
+            }
+
+            if (json.hasOwnProperty('message')) {
+              const counter = (json.message === '') ? '0' : json.message;
+              this.appStorage.sessStr.store('jobs_left', Number(counter));
+            }
+
+            if (res.error === '') {
+              this.navigate();
+            } else {
+              this.modService.show('error', res.error);
+            }
+          }
+        ).catch((err) => {
+          console.error(err);
+        });
+      } else {
+        this.modService.show('login_invalid');
       }
-    ));
+    }).catch((error) => {
+      alert('Server cannot be requested. Please check if you are online.');
+      return throwError(error);
+    });
   }
 
   public startDemo() {
@@ -539,5 +570,34 @@ export class LoginComponent implements OnInit, OnDestroy, ComponentCanDeactivate
     this.member.jobno = '0';
 
     this.onSubmit(this.loginform);
+  }
+
+  public isPasswordCorrect(selectedProject, password) {
+    if (!isNullOrUndefined(this.settingsService.app_settings.octra.allowed_projects)) {
+      const inputHash = sha256(password).toUpperCase();
+      const projectData = this.settingsService.app_settings.octra.allowed_projects.find((a) => {
+        return a.name === selectedProject;
+      });
+
+      if (!isNullOrUndefined(projectData)) {
+        if (projectData.hasOwnProperty('password') && projectData.password !== '') {
+          return projectData.password.toUpperCase() === inputHash;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  passwordExists() {
+    if (!isNullOrUndefined(this.settingsService.app_settings.octra.allowed_projects)) {
+      const projectData = this.settingsService.app_settings.octra.allowed_projects.find((a) => {
+        return a.name === this.member.project;
+      });
+
+      return (!isNullOrUndefined(projectData) && projectData.hasOwnProperty('password')) && projectData.password !== '';
+    }
+
+    return false;
   }
 }

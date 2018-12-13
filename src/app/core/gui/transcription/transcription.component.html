@@ -1,11 +1,14 @@
 <app-alert #alert></app-alert>
 <app-transcription-send-modal #modal></app-transcription-send-modal>
-<app-transcription-sending-modal [sendError]="send_error" #modal2></app-transcription-sending-modal>
+<app-transcription-sending-modal [sendError]="send_error" #transcrSendingModal></app-transcription-sending-modal>
 <app-overview-modal #modal_overview id="overview" (transcriptionSend)="onSendNowClick()"></app-overview-modal>
 <app-shortcuts-modal #modal_shortcuts [editor]="Interface"></app-shortcuts-modal>
 <app-transcription-success-modal #success></app-transcription-success-modal>
 <app-transcription-guidelines-modal #modal_guidelines
                                     [guidelines]="transcrService.guidelines"></app-transcription-guidelines-modal>
+<app-activity-timeout-modal #inactivityModal *ngIf="settingsService.app_settings.octra.inactivityNotice !== undefined
+&& settingsService.app_settings.octra.inactivityNotice.showAfter !== undefined"></app-activity-timeout-modal>
+
 <div class="flex">
     <span id='saving'>
         <fa-icon *ngIf="saving === 'saving'" style="color:#333333" icon="save"></fa-icon>
@@ -28,33 +31,77 @@
     <div class="flex">
         <ng-template appLoadeditor></ng-template>
     </div>
-    <div class="row" id="bottom-navigation" role="group">
-        <button class="btn btn-secondary btn-raised col-md-6"
-                *ngIf="appStorage.usemode === 'local' || appStorage.usemode === 'online'"
-                (click)="abortTranscription()">
+
+    <div *ngIf="settingsService.isTheme('shortAudioFiles') && appStorage.usemode === 'online' && transcrService.feedback !== null">
+        <form class="form-inline" id="bottom-comment">
+            <fieldset class="w-100">
+                <div class="form-group" style="padding-top:0;">
+                <textarea class="form-control w-100" [(ngModel)]="transcrService.feedback.comment"
+                          placeholder="{{'general.insert comment'| translate}}"
+                          name="comment"
+                          style="height:40px;padding:10px;resize: none;"></textarea>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+
+    <div class="row" id="bottom-navigation" role="group"
+         *ngIf="settingsService.isTheme('shortAudioFiles') && appStorage.usemode === 'online'; else defaultBottom">
+        <button class="btn btn-secondary btn-raised col-md-3" (click)="abortTranscription()">
             <fa-icon [icon]="['far', 'times-circle']"></fa-icon>
-            <span *ngIf="!appStorage.easymode" [ngClass]="{' d-none d-md-inline': appc.octra.responsive.enabled}">
-                    {{"general.quit" | translate}}
+            <span>
+                   {{"general.quit" | translate}}
             </span>
         </button>
-        <button type="button" class="btn btn-primary btn-raised col-md-6"
-                (click)="navbarServ.doclick('export');" *ngIf="appStorage.usemode === 'local'">
-            <fa-icon icon="download"></fa-icon>
-            <span
-                    *ngIf="!appStorage.easymode"
-                    [ngClass]="{'d-none d-md-inline': appc.octra.responsive.enabled}"> {{"general.export data" | translate}}</span>
+        <button class="btn btn-raised btn-danger col-md-3" (click)="sendTranscriptionForShortAudioFiles('bad')">
+            <fa-icon icon="paper-plane"></fa-icon>
+            <span>
+                   {{"general.bad" | translate}}
+            </span>
         </button>
-        <button type="button" class="btn btn-primary btn-raised col-md-6"
-                (click)="onSendButtonClick()" *ngIf="appStorage.usemode === 'online'">
+        <button class="btn btn-raised btn-warning col-md-3" style="background-color: orange"
+                (click)="sendTranscriptionForShortAudioFiles('middle')">
+            <fa-icon icon="paper-plane"></fa-icon>
+            <span>
+                  {{"general.middle" | translate}}
+            </span>
+        </button>
+        <button class="btn btn-raised btn-primary col-md-3" (click)="sendTranscriptionForShortAudioFiles('good')">
+            <fa-icon icon="paper-plane"></fa-icon>
+            <span>
+                   {{"general.good" | translate}}
+            </span>
+        </button>
+    </div>
+    <ng-template #defaultBottom>
+        <div class="row" id="bottom-navigation" role="group">
+            <button class="btn btn-secondary btn-raised col-md-6"
+                    *ngIf="appStorage.usemode === 'local' || appStorage.usemode === 'online'"
+                    (click)="abortTranscription()">
+                <fa-icon [icon]="['far', 'times-circle']"></fa-icon>
+                <span *ngIf="!appStorage.easymode" [ngClass]="{' d-none d-md-inline': appc.octra.responsive.enabled}">
+                    {{"general.quit" | translate}}
+            </span>
+            </button>
+            <button type="button" class="btn btn-primary btn-raised col-md-6"
+                    (click)="navbarServ.doclick('export');" *ngIf="appStorage.usemode === 'local'">
+                <fa-icon icon="download"></fa-icon>
+                <span
+                        *ngIf="!appStorage.easymode"
+                        [ngClass]="{'d-none d-md-inline': appc.octra.responsive.enabled}"> {{"general.export data" | translate}}</span>
+            </button>
+            <button type="button" class="btn btn-primary btn-raised col-md-6"
+                    (click)="onSendButtonClick()" *ngIf="appStorage.usemode === 'online'">
             <span
                     *ngIf="!appStorage.easymode"
                     [ngClass]="{'d-none d-md-inline': appc.octra.responsive.enabled}"> {{"transcription.send" | translate}} </span>
-            <fa-icon icon="paper-plane"></fa-icon>
-        </button>
-        <button type="button" class="btn btn-primary btn-raised w-100"
-                (click)="onSaveTranscriptionButtonClicked()" *ngIf="appStorage.usemode === 'url'">
-            <span>SAVE TRANSCRIPTION</span>
-            <fa-icon icon="paper-plane"></fa-icon>
-        </button>
-    </div>
+                <fa-icon icon="paper-plane"></fa-icon>
+            </button>
+            <button type="button" class="btn btn-primary btn-raised w-100"
+                    (click)="onSaveTranscriptionButtonClicked()" *ngIf="appStorage.usemode === 'url'">
+                <span>SAVE TRANSCRIPTION</span>
+                <fa-icon icon="paper-plane"></fa-icon>
+            </button>
+        </div>
+    </ng-template>
 </div>

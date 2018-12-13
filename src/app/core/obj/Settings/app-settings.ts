@@ -23,8 +23,19 @@ export interface AppSettings {
     },
     allowed_browsers: any[],
     allowed_projects: {
-      name: string
+      name: string,
+      password: string
     }[],
-    languages: string[]
+    languages: string[],
+    tracking: {
+      active: string
+      matomo: {
+        host: string,
+        siteID: number
+      }
+    },
+    'inactivityNotice': {
+      'showAfter': number;
+    }
   };
 }

@@ -100,8 +100,6 @@ export class TranscriptionService {
     return this.settingsService.projectsettings;
   }
 
-  public defaultFontSize = 14;
-
   constructor(private audio: AudioService,
               private appStorage: AppStorageService,
               private uiService: UserInteractionsService,
@@ -110,6 +108,16 @@ export class TranscriptionService {
               private http: HttpClient) {
     this.subscrmanager = new SubscriptionManager();
   }
+
+  get validationArray(): { segment: number; validation: any[] }[] {
+    return this._validationArray;
+  }
+
+  get transcriptValid(): boolean {
+    return this._transcriptValid;
+  }
+
+  public defaultFontSize = 14;
 
   /*
    get segments(): Segments {
@@ -120,26 +128,6 @@ export class TranscriptionService {
 
   public dataloaded = new EventEmitter<any>();
   public segmentrequested = new EventEmitter<number>();
-  public saveSegments = () => {
-    // make sure, that no saving overhead exist. After saving request wait 1 second
-    if (!this.saving) {
-      this.saving = true;
-      setTimeout(() => {
-        this.appStorage.save('annotation', {
-          num: this._selectedlevel,
-          level: this._annotation.levels[this._selectedlevel].getObj(this.audiomanager.sampleRateFactor, this.audiomanager.originalInfo.duration.samples)
-        });
-        this.saving = false;
-      }, 2000);
-    }
-  };
-  /**
-   * resets the parent object values. Call this function after transcription was saved
-   */
-  public endTranscription = (destroyaudio: boolean = true) => {
-    this.audio.destroy(destroyaudio);
-    this.destroy();
-  };
 
   public filename = '';
   public levelchanged: EventEmitter<Level> = new EventEmitter<Level>();
@@ -174,13 +162,27 @@ export class TranscriptionService {
   }[] = [];
 
   private _transcriptValid = false;
-
-  get validationArray(): { segment: number; validation: any[] }[] {
-    return this._validationArray;
+  public saveSegments = () => {
+    // make sure, that no saving overhead exist. After saving request wait 1 second
+    if (!this.saving) {
+      this.saving = true;
+      setTimeout(() => {
+        this.appStorage.save('annotation', {
+          num: this._selectedlevel,
+          level: this._annotation.levels[this._selectedlevel].getObj(
+            this.audiomanager.sampleRateFactor, this.audiomanager.originalInfo.duration.samples
+          )
+        });
+        this.saving = false;
+      }, 2000);
+    }
   }
-
-  get transcriptValid(): boolean {
-    return this._transcriptValid;
+  /**
+   * resets the parent object values. Call this function after transcription was saved
+   */
+  public endTranscription = (destroyaudio: boolean = true) => {
+    this.audio.destroy(destroyaudio);
+    this.destroy();
   }
 
   public getSegmentFirstLevel(): number {
@@ -210,7 +212,8 @@ export class TranscriptionService {
       this._audiofile.samplerate = this._audiomanager.originalInfo.samplerate;
       this._audiofile.duration = this._audiomanager.originalInfo.duration.samples;
       this._audiofile.size = this._audiomanager.originalInfo.size;
-      this._audiofile.url = (this.appStorage.usemode === 'online') ? `${this.app_settings.audio_server.url}${this.appStorage.audio_url}` : '';
+      this._audiofile.url = (this.appStorage.usemode === 'online')
+        ? `${this.app_settings.audio_server.url}${this.appStorage.audio_url}` : '';
       this._audiofile.type = this._audiomanager.originalInfo.type;
 
       this.last_sample = this._audiomanager.ressource.info.duration.samples;
@@ -235,7 +238,10 @@ export class TranscriptionService {
     let result: IFile;
 
     if (!(this.annotation === null || this.annotation === undefined)) {
-      result = converter.export(this.annotation.getObj(this.audiomanager.sampleRateFactor, this.audiomanager.originalInfo.duration.samples), this.audiofile, 0).file;
+      result = converter.export(
+        this.annotation.getObj(this.audiomanager.sampleRateFactor, this.audiomanager.originalInfo.duration.samples),
+        this.audiofile, 0
+      ).file;
 
       return result.content;
     }
@@ -257,7 +263,9 @@ export class TranscriptionService {
             // load levels
             for (let i = 0; i < this.appStorage.annotation.length; i++) {
               const level: Level = Level.fromObj(this.appStorage.annotation[i],
-                this._audiomanager.ressource.info.samplerate, this._audiomanager.ressource.info.duration.samples, this.audiomanager.sampleRateFactor);
+                this._audiomanager.ressource.info.samplerate,
+                this._audiomanager.ressource.info.duration.samples,
+                this.audiomanager.sampleRateFactor);
               this._annotation.levels.push(level);
             }
 
@@ -348,16 +356,27 @@ export class TranscriptionService {
       const log_data: OLogging = this.extractUI(this.uiService.elements);
 
       data = {
-        project: ((this.appStorage.user.project === null || this.appStorage.user.project === undefined)) ? 'NOT AVAILABLE' : this.appStorage.user.project,
-        annotator: ((this.appStorage.user.id === null || this.appStorage.user.id === undefined)) ? 'NOT AVAILABLE' : this.appStorage.user.id,
+        project: ((this.appStorage.user.project === null || this.appStorage.user.project === undefined))
+          ? 'NOT AVAILABLE' : this.appStorage.user.project,
+        annotator: ((this.appStorage.user.id === null || this.appStorage.user.id === undefined))
+          ? 'NOT AVAILABLE' : this.appStorage.user.id,
         transcript: null,
         comment: this._feedback.comment,
-        jobno: ((this.appStorage.user.jobno === null || this.appStorage.user.jobno === undefined)) ? 'NOT AVAILABLE' : this.appStorage.user.jobno,
-        quality: this._feedback.exportData(),
+        jobno: ((this.appStorage.user.jobno === null || this.appStorage.user.jobno === undefined))
+          ? 'NOT AVAILABLE' : this.appStorage.user.jobno,
+        quality: (this.settingsService.isTheme('shortAudioFiles'))
+          ? this.appStorage.feedback : JSON.stringify(this._feedback.exportData()),
         status: 'ANNOTATED',
         id: this.appStorage.data_id,
         log: log_data.getObj()
       };
+
+
+      for (let i = 0; i < data.log.length; i++) {
+        if (data.log[i].type === 'transcription:segment_exited') {
+          data.log[i].value = JSON.stringify(data.log[i].value);
+        }
+      }
 
       const transcript: any[] = [];
 
@@ -436,7 +455,7 @@ export class TranscriptionService {
     });
 
     html = html.replace(/((?:\[\[\[)|(?:]]]))/g, (g0, g1) => {
-      if (g1 == '[[[') {
+      if (g1 === '[[[') {
         return '<';
       }
 
@@ -447,11 +466,13 @@ export class TranscriptionService {
   }
 
   public extractUI(ui_elements: StatisticElem[]): OLogging {
+    console.log(`extract UI`);
     const now = new Date();
     const result: OLogging = new OLogging(
       '1.0',
       'UTF-8',
-      ((this.appStorage.user.project === null || this.appStorage.user.project === undefined) || this.appStorage.user.project === '') ? 'local' : this.appStorage.user.project,
+      ((this.appStorage.user.project === null || this.appStorage.user.project === undefined) || this.appStorage.user.project === '')
+        ? 'local' : this.appStorage.user.project,
       now.toUTCString(),
       this._annotation.audiofile.name,
       this._annotation.audiofile.samplerate,
@@ -475,9 +496,9 @@ export class TranscriptionService {
         if (elem instanceof MouseStatisticElem) {
           new_elem.value = elem.value;
         } else if (elem instanceof KeyStatisticElem) {
-          new_elem.value = (<KeyStatisticElem> elem).value;
+          new_elem.value = (<KeyStatisticElem>elem).value;
         } else {
-          new_elem.value = (<StatisticElem> elem).value;
+          new_elem.value = (<StatisticElem>elem).value;
         }
 
         result.logs.push(new_elem);
@@ -704,6 +725,9 @@ export class TranscriptionService {
           const entry = instruction.entries[j];
 
           if (entry.code === code) {
+            entry.description = entry.description.replace(/{{([^{}]+)}}/g, (g0, g1) => {
+              return this.rawToHTML(g1).replace(/(<p>)|(<\/p>)/g, '');
+            });
             return entry;
           }
         }
