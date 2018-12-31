@@ -114,6 +114,8 @@ import {CompatibilityService} from './core/shared/service/compatibility.service'
 import {TranscriptionFeedbackComponent} from './core/gui/transcription-feedback/transcription-feedback.component';
 import {GuidelinesComponent} from './core/gui/guidelines/guidelines.component';
 import {InactivityModalComponent} from './core/modals/inactivity-modal/inactivity-modal.component';
+import {SpeechmaticsService} from './core/shared/service/speechmatics.service';
+import {WordsService} from './core/shared/service/words.service';
 
 library.add(
   faSpinner, faCheck, faTimes, faTrash, faExclamationCircle, faInfoCircle, faDownload, faHeadphones, faPrint, faSearch, faExclamationTriangle,
@@ -128,7 +130,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 export const EDITORS: any[] = [
   DictaphoneEditorComponent,
   TwoDEditorComponent,
-  LinearEditorComponent
+  LinearEditorComponent,
+  // SpeechToTextEditorComponent
 ];
 
 export const ngmodule = {
@@ -229,7 +232,9 @@ export const ngmodule = {
     TranscrEndGuard,
     TranslateService,
     BugReportService,
-    CompatibilityService
+    CompatibilityService,
+    // SpeechmaticsService,
+    WordsService
   ]
 };
 
