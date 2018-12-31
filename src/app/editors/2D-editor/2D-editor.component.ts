@@ -37,6 +37,7 @@ import {AudioNavigationComponent} from '../../media-components/components/audio/
 import {Line} from '../../media-components/obj';
 import {AudioManager} from '../../media-components/obj/media/audio/AudioManager';
 import {Functions} from '../../core/shared/Functions';
+import {WordsService} from '../../core/shared/service/words.service';
 
 @Component({
   selector: 'app-overlay-gui',
@@ -87,6 +88,7 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
   private factor = 8;
   private scrolltimer: Subscription = null;
   private shortcuts: any = {};
+  private transcribedSegments = 0;
 
   public get editor(): TranscrEditorComponent {
     if ((this.window === null || this.window === undefined)) {
@@ -114,7 +116,8 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
               public cd: ChangeDetectorRef,
               public msg: MessageService,
               public settingsService: SettingsService,
-              public appStorage: AppStorageService) {
+              public appStorage: AppStorageService,
+              private wordsService: WordsService) {
 
     this.subscrmanager = new SubscriptionManager();
   }
@@ -264,6 +267,156 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
       }
     }
   }
+
+  public onSelectionChanged(caretpos) {
+    if (!this.audiochunk_window.isPlaying) {
+
+      for (let i = 0; i < this.transcrService.currentlevel.segments.segments.length; i++) {
+        if (this.transcrService.currentlevel.segments.get(i).transcript) {
+          this.transcribedSegments++;
+        }
+      }
+
+      console.log('Anzahl transcr Segments: ' + this.transcribedSegments);
+      this.selected_index = this.window.segment_index;
+      let segment = this.transcrService.currentlevel.segments.get(this.selected_index);
+      console.log('SELECTED IN SELECTIONCHANGED: ' + this.selected_index);
+      let segmentStart = 0;
+      let samples = 0;
+
+
+      // console.log(this.wordsService.getTotalWords(this.transcrService.currentlevel.segments.getFullTranscription()));
+
+      console.log('Caretpos: ' + caretpos);
+      if (segment.transcript) {
+        console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
+
+        const lengthOfCurrentSegment = segment.transcript.length;
+        console.log('Length of transcript of current segment: ' + lengthOfCurrentSegment);
+
+        const wordsOfSegment = this.wordsService.getWordsPerSegment(segment).length;
+        console.log('Words of segment: ' + wordsOfSegment);
+
+        samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfCurrentSegment, wordsOfSegment, true);
+        // const samples = (seg_num > 0) ? this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples : 0;
+        console.log('Samples: ' + samples);
+
+
+        if (this.transcrService.currentlevel.segments.get(this.selected_index - 1)) {
+          segmentStart = this.transcrService.currentlevel.segments.get(this.selected_index - 1).time.samples;
+        }
+        console.log('Segment sample start time: ' + segmentStart);
+
+
+      } else if (this.transcrService.currentlevel.segments.get(this.selected_index - 1) && (this.transcrService.currentlevel.segments.get(this.selected_index - 1).transcript !== '<P>')) {
+        console.log('!this samples = ' + !samples);
+
+        segment = this.transcrService.currentlevel.segments.get(this.selected_index - 1);
+
+        console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
+
+        const lengthOfPreviousSegment = segment.transcript.length;
+        console.log('Length of transcript of previous segment: ' + lengthOfPreviousSegment);
+
+        const wordsOfPreviousSegment = this.wordsService.getWordsPerSegment(segment).length;
+        console.log('Words of segment: ' + wordsOfPreviousSegment);
+
+        if (wordsOfPreviousSegment > 1) {
+          samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfPreviousSegment, wordsOfPreviousSegment, false);
+          // const samples = (seg_num > 0) ? this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples : 0;
+          console.log('Samples: ' + samples);
+
+
+          segmentStart = this.transcrService.currentlevel.segments.get(this.selected_index - 1).time.samples;
+
+          console.log('Segment sample start time: ' + segmentStart);
+        }
+
+
+
+        /*
+                if (samples) {
+                  const newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
+                  console.log('New start sample position according to samples from previous segment: ' + newStartSamplePosition);
+
+                  const start = new AudioTime(newStartSamplePosition, this.audiochunk_window.audiomanager.ressource.info.samplerate);
+                  // TODO: Falls Startzeit gleich der Endzeit der Selektion, nicht die Startzeit updaten.
+                  // this.window.audiochunk.playposition = start;
+                  this.window.audiochunk.selection.start = start;
+                  console.log('this.audiochunk.selection.start: ' + this.window.audiochunk.selection.start);
+                  // this.window.audiochunk.playposition.samples = start.samples;
+                  // console.log('Audiochunk playposition: ' + this.window.audiochunk.playposition.samples);
+
+
+                  /!*
+                          console.log(this.wordsService.getSamplesPerWordOfFullTranscription(this.transcrService.currentlevel.segments));
+
+                          const lengthOfFullTranscription = this.transcrService.currentlevel.segments.getFullTranscription().length;
+                          console.log('Length of full transcription: ' + lengthOfFullTranscription);
+
+                          const wordsOfFullTranscription = this.wordsService.getTotalWords(this.transcrService.currentlevel.segments.getFullTranscription()).length;
+                          console.log('Words of full transcription: ' + wordsOfFullTranscription);
+
+                          const samples = this.wordsService.getSamplesPerCharacter(lengthOfFullTranscription, wordsOfFullTranscription);
+                          console.log('Samples: ' + samples);
+
+                          let segmentStart = 0;
+                          if (this.transcrService.currentlevel.segments.get(this.selected_index - 1)) {
+                            segmentStart = this.transcrService.currentlevel.segments.get(this.selected_index - 1).time.samples;
+                          }
+                          console.log('Segment sample start time: ' + segmentStart);
+
+                          const newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
+                          console.log('New start sample position: ' + newStartSamplePosition);
+
+                          const start = new AudioTime(newStartSamplePosition, this.audiochunk_window.audiomanager.ressource.info.samplerate);
+                          // TODO: Falls Startzeit gleich der Endzeit der Selektion, nicht die Startzeit updaten.
+                          // this.window.audiochunk.playposition = start;
+                          this.window.audiochunk.selection.start = start;
+                          console.log('this.audiochunk.selection.start: ' + this.window.audiochunk.selection.start);
+                          // this.window.audiochunk.playposition.samples = start.samples;
+                          // console.log('Audiochunk playposition: ' + this.window.audiochunk.playposition.samples);
+                  *!/
+                }
+        */
+      }
+      if (samples) {
+        if (this.transcrService.currentlevel.segments.get(this.selected_index - 1)) {
+          segmentStart = this.transcrService.currentlevel.segments.get(this.selected_index - 1).time.samples;
+        }
+
+        const newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
+        console.log('New start sample position: ' + newStartSamplePosition);
+
+        const start = new AudioTime(newStartSamplePosition, this.audiochunk_window.audiomanager.ressource.info.samplerate);
+        // TODO: Falls Startzeit gleich der Endzeit der Selektion, nicht die Startzeit updaten.
+        // this.window.audiochunk.playposition = start;
+        if (start.samples < this.window.audiochunk.selection.end.samples) {
+          this.window.audiochunk.selection.start = start;
+        }
+        console.log('this.audiochunk.selection.start: ' + this.window.audiochunk.selection.start);
+        console.log('this.audiochunk.selection.end: ' + this.window.audiochunk.selection.end);
+        // this.window.audiochunk.playposition.samples = start.samples;
+        // console.log('Audiochunk playposition: ' + this.window.audiochunk.playposition.samples);
+
+      } else {
+        console.log('No characters in segment, yet.');
+      }
+
+    }
+  }
+
+/*
+  afterTyping(status) {
+    if (status === 'stopped') {
+      // this.window.save();
+      // this.window.audiochunk.updatePlayPosition();
+      // this.viewer.update();
+      // Keine Ahnung wie updaten?
+      console.log('Wird gespeichert!');
+    }
+  }
+*/
 
   onWindowAction(state) {
     if (state === 'close') {

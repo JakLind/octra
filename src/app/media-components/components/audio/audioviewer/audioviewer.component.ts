@@ -228,6 +228,7 @@ export class AudioviewerComponent implements OnInit, OnDestroy, AfterViewInit, O
               this.drawCursor(this.av.Mousecursor.line);
             }
             this._initialized = true;
+            this.segmentchange.emit();
           } else {
             console.error('0 lines?');
           }
@@ -1279,7 +1280,8 @@ export class AudioviewerComponent implements OnInit, OnDestroy, AfterViewInit, O
       });
       this.drawCursor(this.av.LastLine);
       if ($event.type !== 'mousedown') {
-        this.selchange.emit(this.audiochunk.selection);
+        this.selchange.emit(this.audiochunk.selection)
+        console.log(this.audiochunk.selection);
       }
 
       this.drawSegments();
