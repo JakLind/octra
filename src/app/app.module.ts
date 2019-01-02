@@ -41,7 +41,7 @@ import {OctraDropzoneComponent} from './core/gui/octra-dropzone/octra-dropzone.c
 import {LoadeditorDirective} from './core/shared/directive/loadeditor.directive';
 import {NewsComponent} from './core/gui/news/news.component';
 import {FaqComponent} from './core/gui/faq/faq.component';
-import {DictaphoneEditorComponent, LinearEditorComponent, TwoDEditorComponent} from './editors';
+import {DictaphoneEditorComponent, LinearEditorComponent, SpeechToTextEditorComponent, TwoDEditorComponent} from './editors';
 import {HelpComponent} from './core/gui/help/';
 import {NewEditorComponent} from './editors/new-editor/new-editor.component';
 import {HelpToolsComponent} from './core/gui/help-tools/';
@@ -131,7 +131,7 @@ export const EDITORS: any[] = [
   DictaphoneEditorComponent,
   TwoDEditorComponent,
   LinearEditorComponent,
-  // SpeechToTextEditorComponent
+  SpeechToTextEditorComponent
 ];
 
 export const ngmodule = {
@@ -233,7 +233,7 @@ export const ngmodule = {
     TranslateService,
     BugReportService,
     CompatibilityService,
-    // SpeechmaticsService,
+    SpeechmaticsService,
     WordsService
   ]
 };

@@ -1,0 +1,46 @@
+<div class="row">
+  <div class="col-xs-12 col-sm-10 col-md-8 col-sm-offset-1 col-md-offset-2">
+    <form (ngSubmit)="onSignIn(f)" #f="ngForm">
+      <div class="form-group">
+        <label for="userID">User ID</label>
+        <input type="number" id="userID" name="userID" ngModel>
+      </div>
+      <div class="form-group">
+        <label for="authToken">Auth Token</label>
+        <input type="password" id="authToken" name="authToken" autocomplete="current-password" ngModel>
+      </div>
+      <button class="btn btn-primary" type="submit">Set data</button>
+    </form>
+
+    <button class="btn btn-primary" (click)="onShowSpeechmaticsJobs()">Show Speechmatics Job Transcription</button>
+    <div>
+      <!--<p>-->
+      <!--{{ resultOfGET }}-->
+      <!--</p>-->
+      <hr>
+      <form>
+        <div class="form-group">
+          <input type="file" id="selectFile" name="selectFile" class="btn btn-success">
+          <input type="button" class="btn btn-primary" (click)="onPostSpeechmaticsJob()" value="Upload File">
+        </div>
+      </form>
+
+      <p>
+        {{ resultOfPOST }}
+      </p>
+
+      <button class="btn btn-primary" (click)="onGetTranscriptionWords()">Get Transcription Words</button>
+      <p>
+        {{ resultSpeechmatics }}
+      </p>
+      <!--<button class="btn btn-primary" (click)="onShowWords()">Show Transcription Words</button>-->
+      <!--<p>-->
+
+      <!--</p>-->
+
+      <button class="btn btn-primary" (click)="onSendToTextEditor()">Send to Text editor</button>
+    </div>
+
+  </div>
+</div>
+<hr>

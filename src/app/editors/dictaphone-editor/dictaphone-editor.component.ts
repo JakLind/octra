@@ -368,7 +368,7 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
           console.log('Samples: ' + samples);
 
 
-          segmentStart = this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples;
+          segmentStart = segment.time.samples;
 
           console.log('Segment sample start time: ' + segmentStart);
         // }
