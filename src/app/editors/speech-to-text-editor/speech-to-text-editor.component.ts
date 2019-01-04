@@ -26,6 +26,7 @@ export class SpeechToTextEditorComponent implements OnInit {
   resultSpeechmaticsTimesArray = [];
   resultSpeechmaticsDurationsArray = [];
   speechmaticsTranscription;
+  jobID: number;
 
   constructor(public audio: AudioService,
               public keyMap: KeymappingService,
@@ -61,10 +62,12 @@ export class SpeechToTextEditorComponent implements OnInit {
   }
 
   onShowSpeechmaticsJobs() {
-    const id = JSON.parse(this.resultOfPOST).body.id;
-    console.log('JobID: ' + id);
+    this.jobID = JSON.parse(this.resultOfPOST).body.id;
+    // this.jobID = 10520856;
+    // this.jobID = 10434706;
+    console.log('JobID: ' + this.jobID);
 
-    this.speechmaticsService.getSpeechmaticsJobs(id)
+    this.speechmaticsService.getSpeechmaticsJobs(this.jobID)
       .subscribe(data => {
         this.resultOfGET = JSON.stringify(data),
           error => alert(error),
@@ -73,10 +76,9 @@ export class SpeechToTextEditorComponent implements OnInit {
   }
 
   onShowSpeechmaticsJobStatus() {
-    const id = JSON.parse(this.resultOfPOST).body.id;
-    console.log('JobID: ' + id);
+    console.log('JobID: ' + this.jobID);
 
-    this.speechmaticsService.getSpeechmaticsJobStatus(id)
+    this.speechmaticsService.getSpeechmaticsJobStatus(this.jobID)
       .subscribe(data => {
         this.resultOfJobStatus = JSON.stringify(data),
           error => alert(error),
@@ -107,7 +109,8 @@ export class SpeechToTextEditorComponent implements OnInit {
       console.log('word: ' + this.resultSpeechmaticsWordsArray[i]);
       console.log('audiofile lastsample: ' + this.transcrService.last_sample);
       if (!this.resultSpeechmaticsTimesArray[i]) {
-        this.transcrService.currentlevel.segments.segments[i - 1].transcript = '<P>';
+        const lastSegment = this.transcrService.currentlevel.segments.segments.length - 1;
+        this.transcrService.currentlevel.segments.segments[lastSegment].transcript = '<P>';
       }
       if (this.resultSpeechmaticsWordsArray[i] !== '.') {
         this.transcrService.currentlevel.segments.add(time_samples, this.resultSpeechmaticsWordsArray[i]);
