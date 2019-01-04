@@ -20,7 +20,7 @@ export class WordsService {
     if (transcription) {
       // this.wordsInTranscription = true;
       this.wordArray = transcription.split(' ');
-      // console.log(this.wordArray);
+      console.log(this.wordArray);
       for (let i = 0; i <= this.wordArray.length; i++) {
         if (this.wordArray[i] === '') {
           this.wordArray.splice(i, 1);
@@ -63,7 +63,7 @@ export class WordsService {
         i = segments.length;
       }
     }
-    if (this.wordArray.length !== 0) {
+    if (this.wordArray.length !== 0 && transcribedSamples > 0) {
       this.samplesPerWordOfFullTranscription = transcribedSamples / this.wordArray.length;
     }
     return this.samplesPerWordOfFullTranscription;

@@ -8,6 +8,7 @@ export class SpeechmaticsService {
   private apiJobsURL: string;
   private userID: number;
   private authToken: string;
+  private wordsOfSpeechmaticsTranscription;
 
   constructor(private http: HttpClient) {}
 
@@ -21,26 +22,29 @@ export class SpeechmaticsService {
   //   return this.http.get(this.proxyurl + 'https://api.speechmatics.com/v1.0/user/' + this.userID + '/jobs/' + id + '/transcript?auth_token= + this.authToken);
   // }
 
-  // TO return form an existing id:
+  // TO return from an existing id:
   getSpeechmaticsJobs() {
     return this.http.get(this.proxyurl + 'https://api.speechmatics.com/v1.0/user/' + this.userID + '/jobs/10434706/transcript?auth_token=' + this.authToken);
   }
 
-  postSpeechmaticsJob(audiofile) {
-    const files = audiofile.nativeElement.querySelector('#selectFile').files;
-    console.log(files);
-    const params = new FormData();
-    // let fileReader = new FileReader();
-    // let blob = new Blob();
-    // let test = fileReader.readAsDataURL(blob);
-    const audio = new File(['how to get filebits?'], 'zero.wav', {type: 'audio/wav'});
-    const inputFile = files[0];
-    console.log('Audio: ' + audio);
-    console.log('File: ' + inputFile, 'files: ' + files[0]);
-    params.append('model',  'de');
-    params.append('data_file', inputFile, inputFile.name);
+  getSpeechmaticsJobStatus(id) {
+    return this.http.get(    this.proxyurl + 'https://api.speechmatics.com/v1.0/user/' + this.userID + '/jobs/' + id + '/?auth_token=' + this.authToken);
 
-    console.log('Params get data_file: ' + params.get('data_file'));
+  }
+
+  postSpeechmaticsJob(audiofile) {
+    // const files = audiofile.nativeElement.querySelector('#selectFile').files;
+    // console.log(files);
+    console.log('audiofile: ' + audiofile);
+    console.log('audiofile[0]: ' + audiofile[0]);
+    const params = new FormData();
+
+    // const inputFile = files[0];
+    // console.log('File: ' + inputFile, 'files: ' + files[0]);
+
+    params.append('model',  'de');
+    params.append('data_file', audiofile, audiofile.name);
+    params.append('diarisation', 'false');
 
     const req = new HttpRequest(
       'POST',
@@ -67,15 +71,37 @@ export class SpeechmaticsService {
     const allWords = [];
     // console.log('stringified speechmaticsTranscription: ' + speechmaticsTranscription);
     // console.log('stringified speechmaticsTranscription JSON parse: ' + JSON.parse(speechmaticsTranscription).words);
-    const wordsOfLocal = JSON.parse(speechmaticsTranscription).words;
-    for (let i = 0; i < wordsOfLocal.length; i++) {
-      // if (wordsOfLocal[i].name === '.') {
+    this.wordsOfSpeechmaticsTranscription = JSON.parse(speechmaticsTranscription).words;
+    for (let i = 0; i < this.wordsOfSpeechmaticsTranscription.length; i++) {
+      // if (wordsOfSpeechmaticsTranscription[i].name === '.') {
       // } else {
-        allWords[i] = wordsOfLocal[i].name;
+        allWords[i] = this.wordsOfSpeechmaticsTranscription[i].name;
       // }
     }
-    const resultSpeechmatics = allWords.join(' ');
+    // const resultSpeechmatics = allWords.join(' ');
+    const resultSpeechmatics = allWords;
     return resultSpeechmatics;
+  }
+
+  getTimesFromSpeechmaticsJSON(speechmaticsTranscription) {
+    const allTimes = [];
+    allTimes[0] = 0;
+    for (let i = 0; i < this.wordsOfSpeechmaticsTranscription.length - 1; i++) {
+      allTimes[i] = this.wordsOfSpeechmaticsTranscription[i + 1].time;
+    }
+    const resultSpeechmaticsTimes = allTimes;
+    return resultSpeechmaticsTimes;
+
+  }
+
+  getDurationsFromSpeechmaticsJSON(speechmaticsTranscription) {
+    const allDurations = [];
+    for (let i = 0; i < this.wordsOfSpeechmaticsTranscription.length; i++) {
+      allDurations[i] = this.wordsOfSpeechmaticsTranscription[i].duration;
+    }
+    const resultSpeechmaticsDurations = allDurations;
+    return resultSpeechmaticsDurations;
+
   }
 
   //   return this.http.get('src/assets/transcription_example.json')

@@ -1,4 +1,4 @@
-import {Component, ElementRef, EventEmitter, OnInit} from '@angular/core';
+import {Component, EventEmitter, OnInit} from '@angular/core';
 import {LinearEditorComponent} from '../linear-editor/linear-editor.component';
 import {KeymappingService} from '../../core/shared/service/keymapping.service';
 import {AudioService} from '../../core/shared/service/audio.service';
@@ -19,8 +19,12 @@ export class SpeechToTextEditorComponent implements OnInit {
   public static initialized: EventEmitter<void> = new EventEmitter<void>();
   resultOfGET: string;
   resultOfPOST: string;
+  resultOfJobStatus: string;
   resLocalExample: string;
   resultSpeechmatics: string;
+  resultSpeechmaticsWordsArray = [];
+  resultSpeechmaticsTimesArray = [];
+  resultSpeechmaticsDurationsArray = [];
   speechmaticsTranscription;
 
   constructor(public audio: AudioService,
@@ -29,14 +33,14 @@ export class SpeechToTextEditorComponent implements OnInit {
               private uiService: UserInteractionsService,
               public settingsService: SettingsService,
               public appStorage: AppStorageService,
-              public speechmaticsService: SpeechmaticsService,
-              private elem: ElementRef) {
+              public speechmaticsService: SpeechmaticsService) {
   }
 
-  private audiofile = this.transcrService.audiofile;
+  private audiofile;
 
   ngOnInit() {
     LinearEditorComponent.initialized.emit();
+    this.audiofile = this.appStorage.file;
   }
 
   onSignIn(form: NgForm) {
@@ -46,7 +50,7 @@ export class SpeechToTextEditorComponent implements OnInit {
   }
 
   onPostSpeechmaticsJob() {
-    this.speechmaticsService.postSpeechmaticsJob(this.elem)
+    this.speechmaticsService.postSpeechmaticsJob(this.audiofile)
       .subscribe(
         (response) => this.resultOfPOST = JSON.stringify(response),
         (error) => console.log(error),
@@ -68,9 +72,23 @@ export class SpeechToTextEditorComponent implements OnInit {
       });
   }
 
+  onShowSpeechmaticsJobStatus() {
+    const id = JSON.parse(this.resultOfPOST).body.id;
+    console.log('JobID: ' + id);
+
+    this.speechmaticsService.getSpeechmaticsJobStatus(id)
+      .subscribe(data => {
+        this.resultOfJobStatus = JSON.stringify(data),
+          error => alert(error),
+          () => console.log('Finished GET Job Status' + JSON.parse(this.resultOfJobStatus).body.job_status);
+      });
+  }
+
   onGetTranscriptionWords() {
     this.speechmaticsTranscription = this.resultOfGET;
-    this.resultSpeechmatics = this.speechmaticsService.getWordsFromSpeechmaticsJSON(this.speechmaticsTranscription);
+    this.resultSpeechmaticsWordsArray = this.speechmaticsService.getWordsFromSpeechmaticsJSON(this.speechmaticsTranscription);
+    this.resultSpeechmaticsTimesArray = this.speechmaticsService.getTimesFromSpeechmaticsJSON(this.speechmaticsTranscription);
+    this.resultSpeechmaticsDurationsArray = this.speechmaticsService.getDurationsFromSpeechmaticsJSON(this.speechmaticsTranscription);
 
     // this.speechmaticsService.getWordsFromSpeechmaticsJSON(this.speechmaticsTranscription);
       // .subscribe(
@@ -82,18 +100,19 @@ export class SpeechToTextEditorComponent implements OnInit {
   }
 
   onSendToTextEditor() {
-    this.transcrService.currentlevel.segments.segments[0].transcript = this.resultSpeechmatics;
-    // this.transcrService.currentlevel.segments.segments[0].time.samples = this.transcrService.audiofile.duration;
-    // TODO: Segment needs a marker at the end to become seg_num 0 instead of seg_num -1
+    for (let i = 0; i < this.resultSpeechmaticsWordsArray.length; i++) {
+      const time_samples = Math.round(this.resultSpeechmaticsTimesArray[i] * this.transcrService.audiofile.samplerate);
+      console.log('time: ' + this.resultSpeechmaticsTimesArray[i]);
+      console.log('round: ' + time_samples);
+      console.log('word: ' + this.resultSpeechmaticsWordsArray[i]);
+      console.log('audiofile lastsample: ' + this.transcrService.last_sample);
+      if (!this.resultSpeechmaticsTimesArray[i]) {
+        // this.transcrService.currentlevel.segments.add(this.transcrService.last_sample - 1, this.resultSpeechmaticsWordsArray[i]);
+        this.transcrService.currentlevel.segments.segments[i - 1].transcript = '<P>';
+      }
+      if (this.resultSpeechmaticsWordsArray[i] !== '.') {
+        this.transcrService.currentlevel.segments.add(time_samples, this.resultSpeechmaticsWordsArray[i]);
+      }
+    }
   }
-
-  // onShowWords() {
-  //   const allWords = [];
-  //   const wordsOfLocal = JSON.parse(this.resLocalExample).body.words;
-  //   for (let i = 0; i < wordsOfLocal.length; i++) {
-  //     allWords[i] = wordsOfLocal[i].name;
-  //   }
-  //   console.log(allWords.join(' '));
-  // }
-
 }

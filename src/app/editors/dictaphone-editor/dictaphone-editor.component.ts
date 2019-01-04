@@ -316,6 +316,7 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
 
   public onSelectionChanged(caretpos) {
 
+/*
     console.log(this.wordsService.getTotalWords(this.transcrService.currentlevel.segments.getFullTranscription()));
 
 
@@ -413,6 +414,7 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
         console.log('No characters in segment, yet.');
       }
     }
+*/
   }
 
   private loadEditor() {
