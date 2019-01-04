@@ -62,28 +62,32 @@ export class SpeechToTextEditorComponent implements OnInit {
   }
 
   onShowSpeechmaticsJobs() {
-    this.jobID = JSON.parse(this.resultOfPOST).body.id;
-    // this.jobID = 10520856;
-    // this.jobID = 10434706;
-    console.log('JobID: ' + this.jobID);
+    if (this.resultOfPOST) {
+      this.jobID = JSON.parse(this.resultOfPOST).body.id;
+      // this.jobID = 10520856;
+      // this.jobID = 10434706;
+      console.log('JobID: ' + this.jobID);
 
-    this.speechmaticsService.getSpeechmaticsJobs(this.jobID)
-      .subscribe(data => {
-        this.resultOfGET = JSON.stringify(data),
-          error => alert(error),
-          () => console.log('Finished GET');
-      });
+      this.speechmaticsService.getSpeechmaticsJobs(this.jobID)
+        .subscribe(data => {
+          this.resultOfGET = JSON.stringify(data),
+            error => alert(error),
+            () => console.log('Finished GET');
+        });
+    }
   }
 
   onShowSpeechmaticsJobStatus() {
-    console.log('JobID: ' + this.jobID);
+    if (this.jobID) {
+      console.log('JobID: ' + this.jobID);
 
-    this.speechmaticsService.getSpeechmaticsJobStatus(this.jobID)
-      .subscribe(data => {
-        this.resultOfJobStatus = JSON.stringify(data),
-          error => alert(error),
-          () => console.log('Finished GET Job Status' + JSON.parse(this.resultOfJobStatus).body.job_status);
-      });
+      this.speechmaticsService.getSpeechmaticsJobStatus(this.jobID)
+        .subscribe(data => {
+          this.resultOfJobStatus = JSON.stringify(data),
+            error => alert(error),
+            () => console.log('Finished GET Job Status' + JSON.parse(this.resultOfJobStatus).body.job_status);
+        });
+    }
   }
 
   onGetTranscriptionWords() {
@@ -93,11 +97,11 @@ export class SpeechToTextEditorComponent implements OnInit {
     this.resultSpeechmaticsDurationsArray = this.speechmaticsService.getDurationsFromSpeechmaticsJSON();
 
     // this.speechmaticsService.getWordsFromSpeechmaticsJSON(this.speechmaticsTranscription);
-      // .subscribe(
-      //   (response) => this.resLocalExample = JSON.stringify(response),
-      //   error => console.log(error),
-      //   () => console.log('Finished GET')
-      // );
+    // .subscribe(
+    //   (response) => this.resLocalExample = JSON.stringify(response),
+    //   error => console.log(error),
+    //   () => console.log('Finished GET')
+    // );
 
   }
 

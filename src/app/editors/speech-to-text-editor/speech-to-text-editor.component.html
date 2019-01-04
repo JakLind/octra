@@ -17,16 +17,15 @@
       {{ resultOfPOST }}
     </p>
     <div>
-      <button class="btn btn-primary" (click)="onShowSpeechmaticsJobStatus()">Speechmatics Job Status</button>
-      <p>
-        {{ resultOfJobStatus }}
-      </p>
-      <hr>
       <button class="btn btn-primary" (click)="onShowSpeechmaticsJobs()">Show Speechmatics Job Transcription</button>
       <p>
         <!--{{ resultOfGET }}-->
       </p>
-
+      <hr>
+      <button class="btn btn-primary" (click)="onShowSpeechmaticsJobStatus()">Speechmatics Job Status</button>
+      <p>
+        {{ resultOfJobStatus }}
+      </p>
       <button class="btn btn-primary" (click)="onGetTranscriptionWords()">Get Transcription Words</button>
       <p>
         {{ resultSpeechmatics }}
