@@ -284,9 +284,6 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
       let segmentStart = 0;
       let samples = 0;
 
-
-      // console.log(this.wordsService.getTotalWords(this.transcrService.currentlevel.segments.getFullTranscription()));
-
       console.log('Caretpos: ' + caretpos);
       if (segment.transcript) {
         console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
@@ -331,54 +328,6 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
 
           console.log('Segment sample start time: ' + segmentStart);
         }
-
-
-
-        /*
-                if (samples) {
-                  const newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
-                  console.log('New start sample position according to samples from previous segment: ' + newStartSamplePosition);
-
-                  const start = new AudioTime(newStartSamplePosition, this.audiochunk_window.audiomanager.ressource.info.samplerate);
-                  // TODO: Falls Startzeit gleich der Endzeit der Selektion, nicht die Startzeit updaten.
-                  // this.window.audiochunk.playposition = start;
-                  this.window.audiochunk.selection.start = start;
-                  console.log('this.audiochunk.selection.start: ' + this.window.audiochunk.selection.start);
-                  // this.window.audiochunk.playposition.samples = start.samples;
-                  // console.log('Audiochunk playposition: ' + this.window.audiochunk.playposition.samples);
-
-
-                  /!*
-                          console.log(this.wordsService.getSamplesPerWordOfFullTranscription(this.transcrService.currentlevel.segments));
-
-                          const lengthOfFullTranscription = this.transcrService.currentlevel.segments.getFullTranscription().length;
-                          console.log('Length of full transcription: ' + lengthOfFullTranscription);
-
-                          const wordsOfFullTranscription = this.wordsService.getTotalWords(this.transcrService.currentlevel.segments.getFullTranscription()).length;
-                          console.log('Words of full transcription: ' + wordsOfFullTranscription);
-
-                          const samples = this.wordsService.getSamplesPerCharacter(lengthOfFullTranscription, wordsOfFullTranscription);
-                          console.log('Samples: ' + samples);
-
-                          let segmentStart = 0;
-                          if (this.transcrService.currentlevel.segments.get(this.selected_index - 1)) {
-                            segmentStart = this.transcrService.currentlevel.segments.get(this.selected_index - 1).time.samples;
-                          }
-                          console.log('Segment sample start time: ' + segmentStart);
-
-                          const newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
-                          console.log('New start sample position: ' + newStartSamplePosition);
-
-                          const start = new AudioTime(newStartSamplePosition, this.audiochunk_window.audiomanager.ressource.info.samplerate);
-                          // TODO: Falls Startzeit gleich der Endzeit der Selektion, nicht die Startzeit updaten.
-                          // this.window.audiochunk.playposition = start;
-                          this.window.audiochunk.selection.start = start;
-                          console.log('this.audiochunk.selection.start: ' + this.window.audiochunk.selection.start);
-                          // this.window.audiochunk.playposition.samples = start.samples;
-                          // console.log('Audiochunk playposition: ' + this.window.audiochunk.playposition.samples);
-                  *!/
-                }
-        */
       }
       if (samples) {
         if (this.transcrService.currentlevel.segments.get(this.selected_index - 1)) {
@@ -389,15 +338,12 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
         console.log('New start sample position: ' + newStartSamplePosition);
 
         const start = new AudioTime(newStartSamplePosition, this.audiochunk_window.audiomanager.ressource.info.samplerate);
-        // TODO: Falls Startzeit gleich der Endzeit der Selektion, nicht die Startzeit updaten.
-        // this.window.audiochunk.playposition = start;
         if (start.samples < this.window.audiochunk.selection.end.samples) {
           this.window.audiochunk.selection.start = start;
         }
         console.log('this.audiochunk.selection.start: ' + this.window.audiochunk.selection.start);
         console.log('this.audiochunk.selection.end: ' + this.window.audiochunk.selection.end);
-        // this.window.audiochunk.playposition.samples = start.samples;
-        // console.log('Audiochunk playposition: ' + this.window.audiochunk.playposition.samples);
+        // Tonkopf sollte noch an den selektierte Samplewert springen
 
       } else {
         console.log('No characters in segment, yet.');
@@ -405,18 +351,6 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
 
     }
   }
-
-/*
-  afterTyping(status) {
-    if (status === 'stopped') {
-      // this.window.save();
-      // this.window.audiochunk.updatePlayPosition();
-      // this.viewer.update();
-      // Keine Ahnung wie updaten?
-      console.log('Wird gespeichert!');
-    }
-  }
-*/
 
   onWindowAction(state) {
     if (state === 'close') {

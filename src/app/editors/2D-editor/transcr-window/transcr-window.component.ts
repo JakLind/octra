@@ -86,8 +86,6 @@ export class TranscrWindowComponent implements OnInit, AfterContentInit, AfterVi
   @ViewChild('window') window: ElementRef;
   @Output() act: EventEmitter<string> = new EventEmitter<string>();
   @Output('selectionchanged') selectionchanged: EventEmitter<number> = new EventEmitter<number>();
-  // @Output('onkeyup') onkeyup: EventEmitter<any> = new EventEmitter<any>();
-  // @Output('typing') typing: EventEmitter<string> = new EventEmitter<string>();
   @Input() easymode = false;
   public pos_y = 0;
   @Input() audiochunk: AudioChunk;
@@ -95,8 +93,6 @@ export class TranscrWindowComponent implements OnInit, AfterContentInit, AfterVi
   private showWindow = false;
   private subscrmanager: SubscriptionManager;
   private temp_segments: Segments;
-  // private _is_typing = false;
-  // private lastkeypress = 0;
   public doit = (direction: string) => {
     this.save();
 
@@ -146,36 +142,6 @@ export class TranscrWindowComponent implements OnInit, AfterContentInit, AfterVi
     }
   }
 
-/*
-  onKeyUp2D = ($event) => {
-    this.onkeyup.emit($event);
-
-    setTimeout(() => {
-      if (Date.now() - this.lastkeypress >= 700 && this.lastkeypress > -1) {
-        if (this._is_typing) {
-          this.typing.emit('stopped');
-        }
-        this._is_typing = false;
-      }
-    }, 700);
-
-    if (!this._is_typing) {
-      this.typing.emit('started');
-    }
-    this._is_typing = true;
-    this.lastkeypress = Date.now();
-
-
-    setTimeout(() => {
-      if (Date.now() - this.lastkeypress >= 1000 && this.lastkeypress > -1) {
-        this.lastkeypress = -1;
-      }
-    }, 1000);
-
-  }
-*/
-
-
   ngOnInit() {
     this.editor.Settings.markers = this.transcrService.guidelines.markers;
     this.editor.Settings.responsive = this.settingsService.responsive.enabled;
@@ -200,7 +166,6 @@ export class TranscrWindowComponent implements OnInit, AfterContentInit, AfterVi
     ));
 
     this.subscrmanager.add(this.keyMap.onkeydown.subscribe(this.onKeyDown));
-    // this.subscrmanager.add(this.keyMap.onkeyup.subscribe(this.onKeyUp2D));
   }
 
   ngOnChanges(obj) {
