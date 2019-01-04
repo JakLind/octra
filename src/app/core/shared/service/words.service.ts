@@ -108,7 +108,7 @@ export class WordsService {
     return samplesPerCharacter;
   }
 
-  getSamplesPerCharacterOfSegment(lengthOfCurrentSegment: number, wordsOfSegment: number, transcriptExists: boolean) {
+  getSamplesPerCharacterOfSegment(lengthOfCurrentSegment: number, wordsOfSegment: number, transcriptExists: boolean, samplerate: number) {
     let samplesPerCharacter = 0;
 
     if (wordsOfSegment !== 0) {
@@ -122,15 +122,15 @@ export class WordsService {
 
     if (!transcriptExists) {
       if (samplesPerCharacter < this.lastSamplesValue || this.lastSamplesValue === 0) {
-        this.samples = samplesPerCharacter;
-        this.lastSamplesValue = this.samples;
+        this.lastSamplesValue = samplesPerCharacter;
+        return samplesPerCharacter;
       } else {
-        samplesPerCharacter = this.lastSamplesValue;
+        this.lastSamplesValue = Math.round((Math.abs(samplesPerCharacter - 2 * samplerate / 100) + this.lastSamplesValue) / 2);
         return this.lastSamplesValue;
       }
+    } else {
+      this.lastSamplesValue = Math.abs(samplesPerCharacter - samplerate / 100);
+      return this.lastSamplesValue;
     }
-    this.samples = samplesPerCharacter;
-    this.lastSamplesValue = this.samples;
-    return this.samples;
   }
 }

@@ -61,10 +61,10 @@ export class SpeechToTextEditorComponent implements OnInit {
   }
 
   onShowSpeechmaticsJobs() {
-    // const id = JSON.parse(this.resultOfPOST).body.id;
-    // console.log('JobID: ' + id);
+    const id = JSON.parse(this.resultOfPOST).body.id;
+    console.log('JobID: ' + id);
 
-    this.speechmaticsService.getSpeechmaticsJobs()
+    this.speechmaticsService.getSpeechmaticsJobs(id)
       .subscribe(data => {
         this.resultOfGET = JSON.stringify(data),
           error => alert(error),
@@ -87,8 +87,8 @@ export class SpeechToTextEditorComponent implements OnInit {
   onGetTranscriptionWords() {
     this.speechmaticsTranscription = this.resultOfGET;
     this.resultSpeechmaticsWordsArray = this.speechmaticsService.getWordsFromSpeechmaticsJSON(this.speechmaticsTranscription);
-    this.resultSpeechmaticsTimesArray = this.speechmaticsService.getTimesFromSpeechmaticsJSON(this.speechmaticsTranscription);
-    this.resultSpeechmaticsDurationsArray = this.speechmaticsService.getDurationsFromSpeechmaticsJSON(this.speechmaticsTranscription);
+    this.resultSpeechmaticsTimesArray = this.speechmaticsService.getTimesFromSpeechmaticsJSON();
+    this.resultSpeechmaticsDurationsArray = this.speechmaticsService.getDurationsFromSpeechmaticsJSON();
 
     // this.speechmaticsService.getWordsFromSpeechmaticsJSON(this.speechmaticsTranscription);
       // .subscribe(
@@ -107,7 +107,6 @@ export class SpeechToTextEditorComponent implements OnInit {
       console.log('word: ' + this.resultSpeechmaticsWordsArray[i]);
       console.log('audiofile lastsample: ' + this.transcrService.last_sample);
       if (!this.resultSpeechmaticsTimesArray[i]) {
-        // this.transcrService.currentlevel.segments.add(this.transcrService.last_sample - 1, this.resultSpeechmaticsWordsArray[i]);
         this.transcrService.currentlevel.segments.segments[i - 1].transcript = '<P>';
       }
       if (this.resultSpeechmaticsWordsArray[i] !== '.') {
