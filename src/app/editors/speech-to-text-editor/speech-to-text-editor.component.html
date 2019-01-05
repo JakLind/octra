@@ -1,38 +1,91 @@
 <div class="row">
   <div class="col-xs-12 col-sm-10 col-md-8 col-sm-offset-1 col-md-offset-2">
+    <div *ngIf="signedIn; else notSignedIn">
+      <p>You already set Speechmatics data to User ID: {{ userIDValue }}.</p>
+      <p>If you want to use a different User ID, enter the credentials in the form and click "Set Data" again.</p>
+    </div>
+    <ng-template #notSignedIn>Please enter valid Speechmatics credentials and click "Set Data".</ng-template>
     <form (ngSubmit)="onSignIn(f)" #f="ngForm">
       <div class="form-group">
         <label for="userID">User ID</label>
-        <input type="number" id="userID" name="userID" ngModel>
+        <input
+          type="number"
+          id="userID"
+          name="userID"
+          class="form-control"
+          autocomplete="username"
+          ngModel
+          required
+          pattern="^[1-9]+[0-9]*$"
+          #userID="ngModel"
+        >
+        <span *ngIf="!userID.valid && userID.touched">Please enter a valid User ID!</span>
       </div>
       <div class="form-group">
         <label for="authToken">Auth Token</label>
-        <input type="password" id="authToken" name="authToken" autocomplete="current-password" ngModel>
+        <input
+          type="password"
+          id="authToken"
+          name="authToken"
+          class="form-control"
+          autocomplete="current-password"
+          ngModel
+          required
+          #authToken="ngModel"
+        >
+        <span *ngIf="!authToken.valid && authToken.touched">Please enter a valid Auth Token!</span>
       </div>
-      <button class="btn btn-primary" type="submit">Set data</button>
+      <button
+        class="btn btn-primary"
+        type="submit"
+        [disabled]="!f.valid">Set Data</button>
       <hr>
-      <button class="btn btn-primary" (click)="onPostSpeechmaticsJob()">Upload File to Speechmatics</button>
+      <button
+        class="btn btn-primary"
+        type="button"
+        (click)="onPostSpeechmaticsJob()"
+        [disabled]="!signedIn"
+      >Upload File to Speechmatics</button>
     </form>
-    <p>
-      {{ resultOfPOST }}
-    </p>
+    <form (ngSubmit)="onDownloadSpeechmaticsTranscription(downF)" #downF="ngForm">
+      <div class="form-group">
+        <label for="jobID">Job ID</label>
+        <input
+          type="number"
+          id="jobID"
+          name="jobID"
+          class="form-control"
+          [ngModel]="jobIDValue"
+          pattern="^[1-9]+[0-9]*$"
+          required
+          #jobID="ngModel"
+        >
+        <span *ngIf="!jobID.valid && jobID.touched">Please enter a valid Job ID!</span>
+      </div>
+      <button
+        class="btn btn-primary"
+        type="submit"
+        [disabled]="!downF.valid || !signedIn"
+      >Download Speechmatics Transcription</button>
+    </form>
     <div>
-      <button class="btn btn-primary" (click)="onShowSpeechmaticsJobs()">Show Speechmatics Job Transcription</button>
-      <p>
-        <!--{{ resultOfGET }}-->
-      </p>
       <hr>
-      <button class="btn btn-primary" (click)="onShowSpeechmaticsJobStatus()">Speechmatics Job Status</button>
-      <p>
-        {{ resultOfJobStatus }}
-      </p>
-      <button class="btn btn-primary" (click)="onGetTranscriptionWords()">Get Transcription Words</button>
-      <p>
-        {{ resultSpeechmatics }}
-      </p>
+      <!--<button-->
+      <!--class="btn btn-primary"-->
+      <!--type="button"-->
+      <!--(click)="onShowSpeechmaticsJobStatus()"-->
+      <!--[disabled]="!jobIDValue"-->
+      <!--&gt;Speechmatics Job Status</button>-->
+      <!--<p>-->
+      <!--{{ resultOfJobStatus }}-->
+      <!--</p>-->
 
-      <button class="btn btn-primary" (click)="onSendToTextEditor()">Send to Text editor</button>
+      <button
+        class="btn btn-primary"
+        type="button"
+        (click)="onSendToTextEditor()"
+        [disabled]="!speechmaticsTranscription"
+      >Send to Text editor</button>
     </div>
   </div>
 </div>
-<hr>

@@ -3,32 +3,42 @@ import {Injectable} from '@angular/core';
 
 @Injectable()
 export class SpeechmaticsService {
+  get authToken(): string {
+    return this._authToken;
+  }
+
+  set authToken(value: string) {
+    this._authToken = value;
+  }
+  get userID(): number {
+    return this._userID;
+  }
+
+  set userID(value: number) {
+    this._userID = value;
+  }
+  get signedIn(): boolean {
+    return this._signedIn;
+  }
+
+  set signedIn(value: boolean) {
+    this._signedIn = value;
+  }
 
   private proxyurl = 'https://cors-anywhere.herokuapp.com/';
-  private apiJobsURL: string;
-  private userID: number;
-  private authToken: string;
+  private _userID: number;
+  private _authToken: string;
   private wordsOfSpeechmaticsTranscription;
+  private _signedIn = false;
 
   constructor(private http: HttpClient) {}
 
-  setIDAndAuthToken(userID: number, authToken: string) {
-    this.userID = userID;
-    this.authToken = authToken;
-    this.apiJobsURL = 'https://api.speechmatics.com/v1.0/user/' + this.userID + '/jobs/?auth_token=' + this.authToken;
+  getSpeechmaticTranscription(id) {
+    return this.http.get(this.proxyurl + 'https://api.speechmatics.com/v1.0/user/' + this._userID + '/jobs/' + id + '/transcript?auth_token=' + this._authToken);
   }
-
-  getSpeechmaticsJobs(id) {
-    return this.http.get(this.proxyurl + 'https://api.speechmatics.com/v1.0/user/' + this.userID + '/jobs/' + id + '/transcript?auth_token=' + this.authToken);
-  }
-
-  // TO return from an existing id:
-  // getSpeechmaticsJobs() {
-  //   return this.http.get(this.proxyurl + 'https://api.speechmatics.com/v1.0/user/' + this.userID + '/jobs/10434706/transcript?auth_token=' + this.authToken);
-  // }
 
   getSpeechmaticsJobStatus(id) {
-    return this.http.get(    this.proxyurl + 'https://api.speechmatics.com/v1.0/user/' + this.userID + '/jobs/' + id + '/?auth_token=' + this.authToken);
+    return this.http.get(    this.proxyurl + 'https://api.speechmatics.com/v1.0/user/' + this._userID + '/jobs/' + id + '/?auth_token=' + this._authToken);
   }
 
   postSpeechmaticsJob(audiofile) {
@@ -39,7 +49,7 @@ export class SpeechmaticsService {
 
     const req = new HttpRequest(
       'POST',
-      (this.proxyurl + this.apiJobsURL),
+      (this.proxyurl + 'https://api.speechmatics.com/v1.0/user/' + this._userID + '/jobs/?auth_token=' + this._authToken),
       params
     );
     return this.http.request(req);

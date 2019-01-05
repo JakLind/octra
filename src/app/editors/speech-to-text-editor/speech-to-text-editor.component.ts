@@ -1,4 +1,4 @@
-import {Component, EventEmitter, OnInit} from '@angular/core';
+import {Component, EventEmitter, OnInit, ViewChild} from '@angular/core';
 import {LinearEditorComponent} from '../linear-editor/linear-editor.component';
 import {KeymappingService} from '../../core/shared/service/keymapping.service';
 import {AudioService} from '../../core/shared/service/audio.service';
@@ -17,6 +17,8 @@ import {NgForm} from '@angular/forms';
 export class SpeechToTextEditorComponent implements OnInit {
   public static editorname = 'Speech-to-text Editor';
   public static initialized: EventEmitter<void> = new EventEmitter<void>();
+  @ViewChild('downF') downloadForm: NgForm;
+
   resultOfGET: string;
   resultOfPOST: string;
   resultOfJobStatus: string;
@@ -26,12 +28,14 @@ export class SpeechToTextEditorComponent implements OnInit {
   resultSpeechmaticsTimesArray = [];
   resultSpeechmaticsDurationsArray = [];
   speechmaticsTranscription;
-  jobID: number;
+  jobIDValue: number;
+  private userIDValue: number;
+  private authToken: string;
+  private signedIn: boolean;
 
   constructor(public audio: AudioService,
               public keyMap: KeymappingService,
               public transcrService: TranscriptionService,
-              private uiService: UserInteractionsService,
               public settingsService: SettingsService,
               public appStorage: AppStorageService,
               public speechmaticsService: SpeechmaticsService) {
@@ -42,12 +46,18 @@ export class SpeechToTextEditorComponent implements OnInit {
   ngOnInit() {
     LinearEditorComponent.initialized.emit();
     this.audiofile = this.appStorage.file;
+    this.userIDValue = this.speechmaticsService.userID;
+    this.authToken = this.speechmaticsService.authToken;
+    this.signedIn = this.speechmaticsService.signedIn;
   }
 
   onSignIn(form: NgForm) {
-    const userID = form.value.userID;
-    const authToken = form.value.authToken;
-    this.speechmaticsService.setIDAndAuthToken(userID, authToken);
+    this.speechmaticsService.userID = form.value.userID;
+    this.speechmaticsService.authToken = form.value.authToken;
+    this.speechmaticsService.signedIn = true;
+    this.userIDValue = this.speechmaticsService.userID;
+    this.authToken = this.speechmaticsService.authToken;
+    this.signedIn = this.speechmaticsService.signedIn;
   }
 
   onPostSpeechmaticsJob() {
@@ -55,55 +65,47 @@ export class SpeechToTextEditorComponent implements OnInit {
       .subscribe(
         (response) => this.resultOfPOST = JSON.stringify(response),
         (error) => console.log(error),
-        () => console.log('Finished POST')
+        () => {
+          console.log('Finished POST');
+          this.jobIDValue = JSON.parse(this.resultOfPOST).body.id;
+        }
       );
-
-    // console.log(this.transcrService.audiofile.name);
   }
 
-  onShowSpeechmaticsJobs() {
-    if (this.resultOfPOST) {
-      this.jobID = JSON.parse(this.resultOfPOST).body.id;
-      // this.jobID = 10520856;
-      // this.jobID = 10434706;
-      console.log('JobID: ' + this.jobID);
-
-      this.speechmaticsService.getSpeechmaticsJobs(this.jobID)
-        .subscribe(data => {
-          this.resultOfGET = JSON.stringify(data),
-            error => alert(error),
-            () => console.log('Finished GET');
-        });
+  onDownloadSpeechmaticsTranscription(form: NgForm) {
+    if (form.value.jobID) {
+      this.jobIDValue = form.value.jobID;
+    } else {
+      this.jobIDValue = JSON.parse(this.resultOfPOST).body.id;
     }
+    // this.jobIDValue = 10520856;
+    // this.jobIDValue = 10434706;
+    console.log('JobID: ' + this.jobIDValue);
+
+    this.speechmaticsService.getSpeechmaticTranscription(this.jobIDValue)
+      .subscribe(
+        data => this.resultOfGET = JSON.stringify(data),
+        error => alert(error),
+        () => {
+          console.log('Finished GET');
+          this.speechmaticsTranscription = this.resultOfGET;
+          this.resultSpeechmaticsWordsArray = this.speechmaticsService.getWordsFromSpeechmaticsJSON(this.speechmaticsTranscription);
+          this.resultSpeechmaticsTimesArray = this.speechmaticsService.getTimesFromSpeechmaticsJSON();
+          this.resultSpeechmaticsDurationsArray = this.speechmaticsService.getDurationsFromSpeechmaticsJSON();
+        }
+      );
   }
 
-  onShowSpeechmaticsJobStatus() {
-    if (this.jobID) {
-      console.log('JobID: ' + this.jobID);
-
-      this.speechmaticsService.getSpeechmaticsJobStatus(this.jobID)
-        .subscribe(data => {
-          this.resultOfJobStatus = JSON.stringify(data),
-            error => alert(error),
-            () => console.log('Finished GET Job Status' + JSON.parse(this.resultOfJobStatus).body.job_status);
-        });
-    }
-  }
-
-  onGetTranscriptionWords() {
-    this.speechmaticsTranscription = this.resultOfGET;
-    this.resultSpeechmaticsWordsArray = this.speechmaticsService.getWordsFromSpeechmaticsJSON(this.speechmaticsTranscription);
-    this.resultSpeechmaticsTimesArray = this.speechmaticsService.getTimesFromSpeechmaticsJSON();
-    this.resultSpeechmaticsDurationsArray = this.speechmaticsService.getDurationsFromSpeechmaticsJSON();
-
-    // this.speechmaticsService.getWordsFromSpeechmaticsJSON(this.speechmaticsTranscription);
-    // .subscribe(
-    //   (response) => this.resLocalExample = JSON.stringify(response),
-    //   error => console.log(error),
-    //   () => console.log('Finished GET')
-    // );
-
-  }
+  // onShowSpeechmaticsJobStatus() {
+  //   console.log('JobID: ' + this.jobIDValue);
+  //
+  //   this.speechmaticsService.getSpeechmaticsJobStatus(this.jobIDValue)
+  //     .subscribe(data => {
+  //       this.resultOfJobStatus = JSON.stringify(data),
+  //         error => alert(error),
+  //         () => console.log('Finished GET Job Status' + JSON.parse(this.resultOfJobStatus).body.job_status);
+  //     });
+  // }
 
   onSendToTextEditor() {
     for (let i = 0; i < this.resultSpeechmaticsWordsArray.length; i++) {
