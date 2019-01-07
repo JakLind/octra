@@ -21,11 +21,5 @@ export const EditorComponents = [
     editor: TwoDEditorComponent,
     translate: 'interfaces.2D editor',
     icon: 'align-justify'
-  },
-  {
-    name: SpeechToTextEditorComponent.editorname,
-    editor: SpeechToTextEditorComponent,
-    translate: 'interfaces.Speech-to-text editor',
-    icon: 'window-maximize'
   }
 ];

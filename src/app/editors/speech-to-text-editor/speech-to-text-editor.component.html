@@ -5,6 +5,7 @@
       <p>If you want to use a different User ID, enter the credentials in the form and click "Set Data" again.</p>
     </div>
     <ng-template #notSignedIn>Please enter valid Speechmatics credentials and click "Set Data".</ng-template>
+<!--
     <form (ngSubmit)="onSignIn(f)" #f="ngForm">
       <div class="form-group">
         <label for="userID">User ID</label>
@@ -47,27 +48,29 @@
         [disabled]="!signedIn"
       >Upload File to Speechmatics</button>
     </form>
-    <form (ngSubmit)="onDownloadSpeechmaticsTranscription(downF)" #downF="ngForm">
-      <div class="form-group">
-        <label for="jobID">Job ID</label>
-        <input
-          type="number"
-          id="jobID"
-          name="jobID"
-          class="form-control"
-          [ngModel]="jobIDValue"
-          pattern="^[1-9]+[0-9]*$"
-          required
-          #jobID="ngModel"
-        >
-        <span *ngIf="!jobID.valid && jobID.touched">Please enter a valid Job ID!</span>
-      </div>
-      <button
-        class="btn btn-primary"
-        type="submit"
-        [disabled]="!downF.valid || !signedIn"
-      >Download Speechmatics Transcription</button>
-    </form>
+-->
+    <!--<form (ngSubmit)="onDownloadSpeechmaticsTranscription(downF)" #downF="ngForm">-->
+      <!--<div class="form-group">-->
+        <!--<label for="jobID">Job ID</label>-->
+        <!--<input-->
+          <!--type="number"-->
+          <!--id="jobID"-->
+          <!--name="jobID"-->
+          <!--class="form-control"-->
+          <!--[ngModel]="jobIDValue"-->
+          <!--pattern="^[1-9]+[0-9]*$"-->
+          <!--required-->
+          <!--#jobID="ngModel"-->
+        <!--&gt;-->
+        <!--<span *ngIf="!jobID.valid && jobID.touched">Please enter a valid Job ID!</span>-->
+      <!--</div>-->
+      <!--<button-->
+        <!--class="btn btn-primary"-->
+        <!--type="submit"-->
+        <!--[disabled]="!signedIn"-->
+        <!--(click)="onDownloadSpeechmaticsTranscription()"-->
+      <!--&gt;Download Speechmatics Transcription</button>-->
+    <!--</form>-->
     <div>
       <hr>
       <!--<button-->
@@ -84,7 +87,7 @@
         class="btn btn-primary"
         type="button"
         (click)="onSendToTextEditor()"
-        [disabled]="!speechmaticsTranscription"
+        [disabled]="!speechmaticsService.jobStatus"
       >Send to Text editor</button>
     </div>
   </div>

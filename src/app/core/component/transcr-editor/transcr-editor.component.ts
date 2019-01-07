@@ -10,6 +10,7 @@ import {isNumeric} from 'rxjs/util/isNumeric';
 import {TimespanPipe} from '../../../media-components/pipe';
 import {AudioManager} from '../../../media-components/obj/media/audio/AudioManager';
 import {Functions} from '../../shared/Functions';
+import {SpeechmaticsService} from '../../shared/service/speechmatics.service';
 
 declare let lang: any;
 declare let document: any;
@@ -85,7 +86,8 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
 
   constructor(private cd: ChangeDetectorRef,
               private langService: TranslateService,
-              private transcrService: TranscriptionService) {
+              private transcrService: TranscriptionService,
+              private speechmaticsService: SpeechmaticsService) {
 
     this._settings = new TranscrEditorConfig().Settings;
     this.subscrmanager = new SubscriptionManager();
@@ -128,6 +130,7 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
   };
 
   private _rawText = '';
+  private speechmaticsIconSet: boolean;
 
   /**
    * converts the editor's html text to raw text
@@ -222,9 +225,11 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
       Navigation.buttons['boundary'] = customArray[0];
       Navigation.buttons['fontSizeUp'] = customArray[1];
       Navigation.buttons['fontSizeDown'] = customArray[2];
+      Navigation.buttons['speechmatics'] = customArray[3];
       Navigation.str_array.push('boundary');
       Navigation.str_array.push('fontSizeDown');
       Navigation.str_array.push('fontSizeUp');
+      Navigation.str_array.push('speechmatics');
     }
 
     /*
@@ -392,7 +397,26 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
       if (this.isDisabledKey(comboKey)) {
         $event.preventDefault();
       } else {
-        if (comboKey === 'ALT + S' && this.Settings.special_markers.boundary) {
+        if (comboKey === 'ALT + T' && this.speechmaticsService.resultSpeechmaticsWordsArray) {
+          $event.preventDefault();
+          console.log('Ich werd ausgeführt - HURRA!');
+          // onSendToTextEditor() {
+          for (let i = 0; i < this.speechmaticsService.resultSpeechmaticsWordsArray.length; i++) {
+            const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[i] * this.transcrService.audiofile.samplerate);
+            console.log('time: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[i]);
+            console.log('round: ' + time_samples);
+            console.log('word: ' + this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
+            console.log('audiofile lastsample: ' + this.transcrService.last_sample);
+            if (!this.speechmaticsService.resultSpeechmaticsTimesArray[i]) {
+              const lastSegment = this.transcrService.currentlevel.segments.segments.length - 1;
+              this.transcrService.currentlevel.segments.segments[lastSegment].transcript = '<P>';
+            }
+            if (this.speechmaticsService.resultSpeechmaticsWordsArray[i] !== '.') {
+              this.transcrService.currentlevel.segments.add(time_samples, this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
+            }
+          }
+          // }
+        } else if (comboKey === 'ALT + S' && this.Settings.special_markers.boundary) {
           // add boundary
           this.insertBoundary('assets/img/components/transcr-editor/boundary.png');
           this.boundaryinserted.emit(this.audiochunk.playposition.samples);
@@ -706,6 +730,39 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
 
     result.push(fontSizeDown);
 
+    if (this.speechmaticsService.resultSpeechmaticsWordsArray) {
+      // create speechmatics button
+      const speechmatics = () => {
+        // create button
+        const btn_js = {
+          contents: 'Speechmatics',
+          tooltip: 'insert speechmatics transcription',
+          container: false,
+          click: () => {
+            for (let i = 0; i < this.speechmaticsService.resultSpeechmaticsWordsArray.length; i++) {
+              const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[i] * this.transcrService.audiofile.samplerate);
+              console.log('time: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[i]);
+              console.log('round: ' + time_samples);
+              console.log('word: ' + this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
+              console.log('audiofile lastsample: ' + this.transcrService.last_sample);
+              if (!this.speechmaticsService.resultSpeechmaticsTimesArray[i]) {
+                const lastSegment = this.transcrService.currentlevel.segments.segments.length - 1;
+                this.transcrService.currentlevel.segments.segments[lastSegment].transcript = '<P>';
+              }
+              if (this.speechmaticsService.resultSpeechmaticsWordsArray[i] !== '.') {
+                this.transcrService.currentlevel.segments.add(time_samples, this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
+              }
+            }
+          }
+        };
+        const button = jQuery.summernote.ui.button(btn_js);
+
+        return button.render();   // return button as jquery object
+      };
+
+      result.push(speechmatics);
+    }
+
     return result;
   }
 
@@ -828,6 +885,11 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
    */
   updateTextField() {
     this._rawText = this.getRawText();
+    if (this.speechmaticsService.resultSpeechmaticsWordsArray && !this.speechmaticsIconSet) {
+      this.update()
+      this.speechmaticsIconSet = true;
+      this.focus(false);
+    }
     jQuery('.transcr-editor .note-editable.card-block').css('font-size', this.transcrService.defaultFontSize + 'px');
   }
 

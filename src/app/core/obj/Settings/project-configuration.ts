@@ -23,6 +23,10 @@ export interface ProjectSettings {
   plugins: {
     pdfexport: {
       url: ''
+    },
+    speechmatics: {
+      userID: number,
+      authToken: string
     }
   };
   feedback_form: Group[];

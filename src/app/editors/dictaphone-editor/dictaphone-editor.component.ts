@@ -12,6 +12,7 @@ import {AudioNavigationComponent} from '../../media-components/components/audio/
 import {AudioplayerComponent} from '../../media-components/components/audio/audioplayer';
 import {TranscrEditorComponent} from '../../core/component/transcr-editor';
 import {WordsService} from '../../core/shared/service/words.service';
+import {SpeechmaticsService} from '../../core/shared/service/speechmatics.service';
 
 @Component({
   selector: 'app-audioplayer-gui',
@@ -59,11 +60,16 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
               private uiService: UserInteractionsService,
               public settingsService: SettingsService,
               private wordsService: WordsService,
+              private speechmaticsService: SpeechmaticsService,
               public appStorage: AppStorageService) {
     this.subscrmanager = new SubscriptionManager();
   }
 
   ngOnInit() {
+    if (!this.speechmaticsService.transcriptionRequested) {
+      this.speechmaticsService.postSpeechmaticsJob();
+      this.speechmaticsService.transcriptionRequested = true;
+    }
     this.audiomanager = this.audio.audiomanagers[0];
     this.audiochunk = this.audiomanager.mainchunk.clone();
     this.audiochunk.speed = 1;

@@ -117,8 +117,7 @@
   "interfaces": {
     "simple editor": "Dictaphone Editor",
     "linear editor": "Linearer Editor",
-    "2D editor": "2D-Editor",
-    "Speech-to-text editor": "Speech-to-text Editor"
+    "2D editor": "2D-Editor"
   },
   "modal": {
     "transcription": {
