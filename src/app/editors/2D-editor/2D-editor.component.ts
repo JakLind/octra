@@ -280,34 +280,30 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
       console.log('Anzahl transcr Segments: ' + this.transcribedSegments);
       this.selected_index = this.window.segment_index;
       let segment = this.transcrService.currentlevel.segments.get(this.selected_index);
-      console.log('SELECTED IN SELECTIONCHANGED: ' + this.selected_index);
+      console.log('SELECTED SEGMENT IN SELECTIONCHANGED: ' + this.selected_index);
       let segmentStart = 0;
       let samples = 0;
       let temporaryIndex;
+      console.log(this.transcrService.currentlevel.segments.get(this.selected_index - 1) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 1)).length > 1);
 
       console.log('Caretpos: ' + caretpos);
-      if (segment.transcript) {
-        console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
-
-        const lengthOfCurrentSegment = segment.transcript.length;
-        console.log('Length of transcript of current segment: ' + lengthOfCurrentSegment);
-
-        const wordsOfSegment = this.wordsService.getWordsPerSegment(segment).length;
-        console.log('Words of segment: ' + wordsOfSegment);
-
-        samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfCurrentSegment, wordsOfSegment, true, this.transcrService.audiofile.samplerate);
-        // const samples = (seg_num > 0) ? this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples : 0;
-        console.log('Samples aus gespeichertem segment: ' + samples);
-
-
-        if (this.transcrService.currentlevel.segments.get(this.selected_index - 1)) {
-          segmentStart = this.transcrService.currentlevel.segments.get(this.selected_index - 1).time.samples;
-        }
-        console.log('Segment sample start time: ' + segmentStart);
-
-
-      } else if (this.transcrService.currentlevel.segments.get(this.selected_index - 1) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 1)).length > 1) {
+      // if (segment.transcript) {
+      //   console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
+      //
+      //   const lengthOfCurrentSegment = segment.transcript.length;
+      //   console.log('Length of transcript of current segment: ' + lengthOfCurrentSegment);
+      //
+      //   const wordsOfSegment = this.wordsService.getWordsPerSegment(segment).length;
+      //   console.log('Words of segment: ' + wordsOfSegment);
+      //
+      //   samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfCurrentSegment, wordsOfSegment, true, this.transcrService.audiofile.samplerate);
+      //   // const samples = (seg_num > 0) ? this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples : 0;
+      //   console.log('Samples aus gespeichertem segment: ' + samples);
+      // }
+      // else
+        if (this.transcrService.currentlevel.segments.get(this.selected_index - 1) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 1)).length > 1) {
         temporaryIndex = this.selected_index - 1;
+        console.log('temporaryIndex: ' + temporaryIndex);
       }
       else if (this.transcrService.currentlevel.segments.get(this.selected_index - 2) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 2)).length > 1) {
         temporaryIndex = this.selected_index - 2;
@@ -315,7 +311,11 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
       else if (this.transcrService.currentlevel.segments.get(this.selected_index - 4) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 4)).length > 1) {
         temporaryIndex = this.selected_index - 4;
       }
-      if (temporaryIndex) {
+        else if (this.transcrService.currentlevel.segments.get(this.selected_index) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index)).length > 1) {
+          temporaryIndex = this.selected_index;
+        }
+      if (temporaryIndex >= 0) {
+        console.log('temporaryIndex: ' + temporaryIndex);
 
         console.log('!this samples = ' + !samples);
 

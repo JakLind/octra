@@ -85,7 +85,7 @@ export class WordsService {
         }
         console.log('Segment duration: ' + segmentSamples);
         if (this.wordPerSegmentArray.length !== 0) {
-          this.samplesPerWordOfSegment = segmentSamples / this.wordPerSegmentArray.length;
+          this.samplesPerWordOfSegment = Math.round(segmentSamples / this.wordPerSegmentArray.length);
         }
         i = segments.length;
         return this.samplesPerWordOfSegment;
@@ -112,7 +112,7 @@ export class WordsService {
     let samplesPerCharacter = 0;
 
     if (wordsOfSegment !== 0) {
-      const charactersPerWord = lengthOfCurrentSegment / wordsOfSegment;
+      const charactersPerWord = Math.round(lengthOfCurrentSegment / wordsOfSegment);
       console.log('charactersPerWord: ' + charactersPerWord);
       samplesPerCharacter = Math.round(this.samplesPerWordOfSegment / charactersPerWord);
     }
@@ -129,7 +129,12 @@ export class WordsService {
         return this.lastSamplesValue;
       }
     } else {
-      this.lastSamplesValue = Math.abs(samplesPerCharacter - samplerate / 100);
+      // führe Berechnung nur durch, falls sie einen Samplewert von mindestens 20ms ergibt, ansonsten übernehme den samplesPerCharacter Wert ohne Abzüge
+      if (Math.abs(samplesPerCharacter - samplerate / 100) >= samplerate / 100 * 2) {
+        this.lastSamplesValue = Math.abs(samplesPerCharacter - samplerate / 100);
+      } else {
+        this.lastSamplesValue = samplesPerCharacter;
+      }
       return this.lastSamplesValue;
     }
   }
