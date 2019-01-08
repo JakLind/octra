@@ -283,6 +283,7 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
       console.log('SELECTED IN SELECTIONCHANGED: ' + this.selected_index);
       let segmentStart = 0;
       let samples = 0;
+      let temporaryIndex;
 
       console.log('Caretpos: ' + caretpos);
       if (segment.transcript) {
@@ -305,10 +306,20 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
         console.log('Segment sample start time: ' + segmentStart);
 
 
-      } else if (this.transcrService.currentlevel.segments.get(this.selected_index - 1) && (this.transcrService.currentlevel.segments.get(this.selected_index - 1).transcript !== '<P>')) {
+      } else if (this.transcrService.currentlevel.segments.get(this.selected_index - 1) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 1)).length > 1) {
+        temporaryIndex = this.selected_index - 1;
+      }
+      else if (this.transcrService.currentlevel.segments.get(this.selected_index - 2) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 2)).length > 1) {
+        temporaryIndex = this.selected_index - 2;
+      }
+      else if (this.transcrService.currentlevel.segments.get(this.selected_index - 4) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 4)).length > 1) {
+        temporaryIndex = this.selected_index - 4;
+      }
+      if (temporaryIndex) {
+
         console.log('!this samples = ' + !samples);
 
-        segment = this.transcrService.currentlevel.segments.get(this.selected_index - 1);
+        segment = this.transcrService.currentlevel.segments.get(temporaryIndex);
 
         console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
 
@@ -318,14 +329,12 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
         const wordsOfPreviousSegment = this.wordsService.getWordsPerSegment(segment).length;
         console.log('Words of segment: ' + wordsOfPreviousSegment);
 
-        if (wordsOfPreviousSegment > 1) {
-          samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfPreviousSegment, wordsOfPreviousSegment, false, this.transcrService.audiofile.samplerate);
-          // const samples = (seg_num > 0) ? this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples : 0;
-          console.log('Samples aus ungespeichertem Segment: ' + samples);
+        samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfPreviousSegment, wordsOfPreviousSegment, false, this.transcrService.audiofile.samplerate);
+        // const samples = (seg_num > 0) ? this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples : 0;
+        console.log('Samples aus ungespeichertem Segment: ' + samples);
 
-          // segmentStart = this.transcrService.currentlevel.segments.get(this.selected_index - 1).time.samples;
-          // console.log('Segment sample start time: ' + segmentStart);
-        }
+        // segmentStart = this.transcrService.currentlevel.segments.get(this.selected_index - 1).time.samples;
+        // console.log('Segment sample start time: ' + segmentStart);
       }
       if (samples) {
         if (this.transcrService.currentlevel.segments.get(this.selected_index - 1)) {
