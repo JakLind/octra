@@ -296,7 +296,7 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
 
         samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfCurrentSegment, wordsOfSegment, true, this.transcrService.audiofile.samplerate);
         // const samples = (seg_num > 0) ? this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples : 0;
-        console.log('Samples: ' + samples);
+        console.log('Samples aus gespeichertem segment: ' + samples);
 
 
         if (this.transcrService.currentlevel.segments.get(this.selected_index - 1)) {
@@ -321,7 +321,7 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
         if (wordsOfPreviousSegment > 1) {
           samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfPreviousSegment, wordsOfPreviousSegment, false, this.transcrService.audiofile.samplerate);
           // const samples = (seg_num > 0) ? this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples : 0;
-          console.log('Samples: ' + samples);
+          console.log('Samples aus ungespeichertem Segment: ' + samples);
 
           // segmentStart = this.transcrService.currentlevel.segments.get(this.selected_index - 1).time.samples;
           // console.log('Segment sample start time: ' + segmentStart);
@@ -337,11 +337,12 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
 
         const start = new AudioTime(newStartSamplePosition, this.audiochunk_window.audiomanager.ressource.info.samplerate);
         if (start.samples < this.window.audiochunk.selection.end.samples) {
-          this.window.audiochunk.selection.start = start;
+
+          this.window.audiochunk.startpos = start;
+          this.window.loupe.viewer.drawPlayCursor();
         }
         console.log('this.audiochunk.selection.start: ' + this.window.audiochunk.selection.start);
         console.log('this.audiochunk.selection.end: ' + this.window.audiochunk.selection.end);
-        // Tonkopf sollte noch an den selektierte Samplewert springen
 
       } else {
         console.log('No characters in segment, yet.');
