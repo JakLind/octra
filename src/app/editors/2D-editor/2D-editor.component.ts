@@ -271,16 +271,17 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
   public onSelectionChanged(caretpos) {
     if (!this.audiochunk_window.isPlaying) {
 
+/*
       for (let i = 0; i < this.transcrService.currentlevel.segments.segments.length; i++) {
         if (this.transcrService.currentlevel.segments.get(i).transcript) {
           this.transcribedSegments++;
         }
       }
+*/
 
-      console.log('Anzahl transcr Segments: ' + this.transcribedSegments);
+      // console.log('Anzahl transcr Segments: ' + this.transcribedSegments);
       this.selected_index = this.window.segment_index;
-      let segment = this.transcrService.currentlevel.segments.get(this.selected_index);
-      console.log('SELECTED SEGMENT IN SELECTIONCHANGED: ' + this.selected_index);
+      console.log('Selected segment: ' + this.selected_index);
       let segmentStart = 0;
       let samples = 0;
       let temporaryIndex;
@@ -317,9 +318,7 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
       if (temporaryIndex >= 0) {
         console.log('temporaryIndex: ' + temporaryIndex);
 
-        console.log('!this samples = ' + !samples);
-
-        segment = this.transcrService.currentlevel.segments.get(temporaryIndex);
+        const segment = this.transcrService.currentlevel.segments.get(temporaryIndex);
 
         console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
 
