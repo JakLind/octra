@@ -120,7 +120,8 @@ export class TranscrWindowComponent implements OnInit, AfterContentInit, AfterVi
     switch ($event.comboKey) {
       case ('ALT + ARROWRIGHT'):
         $event.event.preventDefault();
-        if (this.segment_index < this.transcrService.currentlevel.segments.length - 1) {
+        if (!this.isNextSegmentLastAndBreak(this.segment_index)
+          && this.segment_index < this.transcrService.currentlevel.segments.length - 1) {
           this.doit('right');
         } else {
           this.save();
@@ -564,6 +565,17 @@ export class TranscrWindowComponent implements OnInit, AfterContentInit, AfterVi
         start = samples_array[i];
       }
     }
+  }
+
+  /**
+   * checks if next segment is the last one and contains only a break.
+   * @param segment_index
+   */
+  public isNextSegmentLastAndBreak(segment_index: number) {
+    const currentLevel = this.transcrService.currentlevel;
+    const nextSegment = currentLevel.segments.get(segment_index + 1);
+    return segment_index === currentLevel.segments.length - 2
+      && nextSegment.transcript === this.transcrService.break_marker.code;
   }
 
   public onSelectionChanged(caretpos) {
