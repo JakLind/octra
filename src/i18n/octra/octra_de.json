@@ -170,7 +170,7 @@
     },
     "inactivity": {
       "header": "Längere Inaktivität entdeckt",
-      "body": "Du warst seit {{value}} Minuten inaktiv ohne OCTRA zu beenden. Es ist empfehlenswert, OCTRA bei vorrausichtlich längerer Inaktivität zu beenden. Falls Du die Transkription gerade nicht fortsetzen möchtest, solltest Du OCTRA jetzt beenden. Was möchtest Du tun?",
+      "body": "Du warst seit mindestens {{value}} Minuten inaktiv ohne OCTRA zu beenden. Es ist empfehlenswert, OCTRA bei vorrausichtlich längerer Inaktivität zu beenden. Falls Du die Transkription gerade nicht fortsetzen möchtest, solltest Du OCTRA jetzt beenden. Was möchtest Du tun?",
       "new": "Neue Transkription beginnen",
       "continue": "Transkription fortsetzen",
       "quit": "OCTRA beenden"
@@ -189,7 +189,8 @@
     "last used": "zuletzt genutzt",
     "login and remove": "Daten des lokalen Modus löschen & anmelden",
     "local and remove": "Daten des online Modus löschen & weiter",
-    "demo": "Klicke hier um OCTRA mit einer beliebigen Audiodatei zu öffnen (Demo)"
+    "demo": "Klicke hier um OCTRA mit einer beliebigen Audiodatei zu öffnen (Demo)",
+    "api not available": "Der Server ist aktuell nicht erreichbar. Bitte versuche es später erneut. Sollte sich das auch nach 4 Stunden nicht ändern, sende uns bitte eine Nachricht über das Feedback Formular."
   },
   "dropzone": {
     "drag&drop here": "Audiodatei (*.wav) (+ optional Datei zum Importieren) hier hineinziehen oder hier klicken",

@@ -18,6 +18,7 @@ import {AudioTime, SubscriptionManager} from '../../shared';
 import {isFunction} from 'util';
 import {Segment} from '../../obj/Annotation/Segment';
 import {PlayBackState} from '../../../media-components/obj/media';
+import {isNullOrUndefined} from '../../shared/Functions';
 
 @Component({
   selector: 'app-transcr-overview',
@@ -197,7 +198,7 @@ export class TranscrOverviewComponent implements OnInit, OnDestroy, AfterViewIni
 
   private updateSegments() {
     this.playStateSegments = [];
-    if (this.transcrService.validationArray.length > 0) {
+    if (!isNullOrUndefined(this.transcrService.validationArray) && this.transcrService.validationArray.length > 0) {
       if (!this.segments || !this.transcrService.guidelines) {
         this.shown_segments = [];
       }
@@ -219,9 +220,12 @@ export class TranscrOverviewComponent implements OnInit, OnDestroy, AfterViewIni
           validation: ''
         };
 
-        if (typeof validateAnnotation !== 'undefined' && typeof validateAnnotation === 'function') {
+        if (typeof validateAnnotation !== 'undefined' && typeof validateAnnotation === 'function'
+          && !isNullOrUndefined(this.transcrService.validationArray[i])) {
           obj.transcription.html = this.transcrService.underlineTextRed(obj.transcription.text,
             this.transcrService.validationArray[i].validation);
+        } else {
+          obj.transcription.html = segment.transcript;
         }
 
         obj.transcription.html = this.transcrService.rawToHTML(obj.transcription.html);
@@ -231,6 +235,7 @@ export class TranscrOverviewComponent implements OnInit, OnDestroy, AfterViewIni
           }
           return '>';
         });
+        obj.transcription.html = obj.transcription.html.replace(/(<p>)|(<\/p>)/g, '');
 
         result.push(obj);
 
