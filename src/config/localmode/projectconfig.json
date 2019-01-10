@@ -30,8 +30,7 @@
   "interfaces": [
     "Dictaphone Editor",
     "Linear Editor",
-    "2D-Editor",
-    "Speech-to-text Editor"
+    "2D-Editor"
   ],
   "feedback_form": [
     {
