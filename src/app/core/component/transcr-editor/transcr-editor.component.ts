@@ -735,10 +735,14 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
       const speechmatics = () => {
         // create button
         const btn_js = {
-          contents: 'Speechmatics',
-          tooltip: 'insert speechmatics transcription',
+          contents: 'Spracherkennung',
+          tooltip: 'insert speech recognition transcription',
           container: false,
           click: () => {
+            // Finds last word in current transcription
+            // const lastWordInTranscription = this.transcrService.currentlevel.segments.segments[this.transcrService.currentlevel.segments.length - 1].transcript;
+            // console.log('last word in transcr: ' + lastWordInTranscription);
+
             for (let i = 0; i < this.speechmaticsService.resultSpeechmaticsWordsArray.length; i++) {
               const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[i] * this.transcrService.audiofile.samplerate);
               console.log('time: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[i]);
@@ -753,6 +757,7 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
                 this.transcrService.currentlevel.segments.add(time_samples, this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
               }
             }
+            //TODO: Update text editor of opened editor (2D/linear/dictaphone)
           }
         };
         const button = jQuery.summernote.ui.button(btn_js);

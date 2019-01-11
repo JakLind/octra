@@ -81,7 +81,7 @@ export class SpeechToTextEditorComponent implements OnInit {
     // this.jobIDValue = 10434706;
     console.log('JobID: ' + this.jobIDValue);*/
 
-    // this.speechmaticsService.getSpeechmaticTranscription();
+    // this.speechmaticsService.getSpeechmaticsTranscription();
   // }
 
   // onShowSpeechmaticsJobStatus() {

@@ -5,6 +5,13 @@ import {AppStorageService} from './appstorage.service';
 
 @Injectable()
 export class SpeechmaticsService {
+  get transcriptionAddedAsSegments(): boolean {
+    return this._transcriptionAddedAsSegments;
+  }
+
+  set transcriptionAddedAsSegments(value: boolean) {
+    this._transcriptionAddedAsSegments = value;
+  }
   get jobStatus(): string {
     return this._jobStatus;
   }
@@ -40,35 +47,28 @@ export class SpeechmaticsService {
   // set wordsOfSpeechmaticsTranscription(value) {
   //   this._wordsOfSpeechmaticsTranscription = value;
   // }
-  // get authToken(): string {
-  //   return this._authToken;
-  // }
-  //
-  // set authToken(value: string) {
-  //   this._authToken = value;
-  // }
-  // get userID(): number {
-  //   return this._userID;
-  // }
-  //
-  // set userID(value: number) {
-  //   this._userID = value;
-  // }
-  // get signedIn(): boolean {
-  //   return this._signedIn;
-  // }
-  //
-  // set signedIn(value: boolean) {
-  //   this._signedIn = value;
-  // }
+  get authToken(): string {
+    return this._authToken;
+  }
+
+  set authToken(value: string) {
+    this._authToken = value;
+  }
+  get userID(): number {
+    return this._userID;
+  }
+
+  set userID(value: number) {
+    this._userID = value;
+  }
 
   constructor(private http: HttpClient,
               public settingsService: SettingsService,
               public appStorageService: AppStorageService) {}
 
   private proxyurl = 'https://cors-anywhere.herokuapp.com/';
-  private _userID = this.settingsService.projectsettings.plugins.speechmatics.userID;
-  private _authToken = this.settingsService.projectsettings.plugins.speechmatics.authToken;
+  private _userID;
+  private _authToken;
   private _wordsOfSpeechmaticsTranscription;
   private audiofile = this.appStorageService.file;
   private jobID: number;
@@ -80,8 +80,84 @@ export class SpeechmaticsService {
   private _resultSpeechmaticsTimesArray: any[];
   private resultSpeechmaticsDurationsArray: any[];
   private _transcriptionRequested: boolean;
+  private _transcriptionAddedAsSegments: boolean;
 
-  getSpeechmaticTranscription() {
+  postSpeechmaticsJob() {
+    const params = new FormData();
+    params.append('model',  'de');
+    params.append('data_file', this.audiofile, this.audiofile.name);
+    params.append('diarisation', 'false');
+
+    const req = new HttpRequest(
+      'POST',
+      (this.proxyurl + 'https://api.speechmatics.com/v1.0/user/' + this._userID + '/jobs/?auth_token=' + this._authToken),
+      params
+    );
+
+    this.http.request(req)
+      .subscribe(
+        (response) => this.resultOfPOST = JSON.stringify(response),
+        (error) => {
+          switch (error.error.code) {
+            case 400:
+              console.log('Could not sent audio to speech recognition. The following error occurred: ' + error.error.error);
+              break;
+            case 401:
+              console.log('Could not sent audio to speech recognition. Check your projectconfig.json (plugins). ' + error.error.error);
+              break;
+            case 403:
+              console.log('Unsupported audio format or insufficient credit: ' + error.error.error);
+              break;
+            case 404:
+              console.log('There was an error while trying to sent audio to speech recognition: ' + error.error.error);
+              break;
+            case 429:
+              console.log('Too many requests were sent to speech recognition. Please try again later. ' + error.error.error);
+              break;
+            case 500:
+              console.log('There is a problem with the speech recognition server.Please try again later. ' + error.error.error);
+              break;
+            case 502:
+              console.log('The speech recognition server is not active at present. Please try again later. ' + error.error.error);
+              break;
+            case 503:
+              console.log('The speech recognition service is temporarily unavailable. Please try again later. ' + error.error.error);
+              break;
+            default:
+              console.log(error);
+          }
+        },
+        () => {
+          console.log('Finished POST');
+          this.jobID = JSON.parse(this.resultOfPOST).body.id;
+          this.getSpeechmaticsJobStatus();
+        }
+      );
+  }
+
+  getSpeechmaticsJobStatus() {
+    this.http.get(
+      this.proxyurl
+      + 'https://api.speechmatics.com/v1.0/user/' + this._userID
+      + '/jobs/' + this.jobID +
+      '/?auth_token=' + this._authToken).
+    subscribe(
+      (response) => this.resultOfGetJobStatus = JSON.stringify(response),
+      (error) => console.log(error),
+      () => {
+        this._jobStatus = JSON.parse(this.resultOfGetJobStatus).job.job_status;
+        if (this._jobStatus === 'done') {
+          console.log('Finished GET JobStatus: ' + this._jobStatus);
+          this.getSpeechmaticsTranscription();
+        } else {
+          console.log('Finished GET JobStatus: ' + this._jobStatus + 'Requesting again...');
+          this.getSpeechmaticsJobStatus();
+        }
+      }
+    );
+  }
+
+  getSpeechmaticsTranscription() {
     this.http.get(
       this.proxyurl
       + 'https://api.speechmatics.com/v1.0/user/' + this._userID
@@ -99,65 +175,11 @@ export class SpeechmaticsService {
       );
   }
 
-  getSpeechmaticsJobStatus() {
-    this.http.get(
-      this.proxyurl
-      + 'https://api.speechmatics.com/v1.0/user/' + this._userID
-      + '/jobs/' + this.jobID +
-      '/?auth_token=' + this._authToken).
-      subscribe(
-      (response) => this.resultOfGetJobStatus = JSON.stringify(response),
-      (error) => console.log(error),
-      () => {
-        this._jobStatus = JSON.parse(this.resultOfGetJobStatus).job.job_status;
-        if (this._jobStatus === 'done') {
-          console.log('Finished GET JobStatus: ' + this._jobStatus);
-          this.getSpeechmaticTranscription();
-        } else {
-          console.log('Finished GET JobStatus: ' + this._jobStatus + 'Requesting again...');
-          this.getSpeechmaticsJobStatus();
-        }
-      }
-    );
-  }
-
-  postSpeechmaticsJob() {
-    const params = new FormData();
-    params.append('model',  'de');
-    params.append('data_file', this.audiofile, this.audiofile.name);
-    params.append('diarisation', 'false');
-
-    const req = new HttpRequest(
-      'POST',
-      (this.proxyurl + 'https://api.speechmatics.com/v1.0/user/' + this._userID + '/jobs/?auth_token=' + this._authToken),
-      params
-    );
-
-    this.http.request(req)
-      .subscribe(
-      (response) => this.resultOfPOST = JSON.stringify(response),
-      (error) => console.log(error),
-      () => {
-        console.log('Finished POST');
-        this.jobID = JSON.parse(this.resultOfPOST).body.id;
-        this.getSpeechmaticsJobStatus();
-      }
-    );
-  }
-
   getWordsFromSpeechmaticsJSON(speechmaticsTranscription) {
-    //   const req = new HttpRequest(
-    //     'GET',
-    //     ('../../../assets/transcription_example.json')
-    //   );
-    //
-    //   return this.http.request(req);
-    // }
-
     const allWords = [];
     this._wordsOfSpeechmaticsTranscription = JSON.parse(speechmaticsTranscription).words;
     for (let i = 0; i < this._wordsOfSpeechmaticsTranscription.length; i++) {
-        allWords[i] = this._wordsOfSpeechmaticsTranscription[i].name;
+      allWords[i] = this._wordsOfSpeechmaticsTranscription[i].name;
     }
     // const resultSpeechmatics = allWords.join(' ');
     const resultSpeechmatics = allWords;
@@ -172,7 +194,6 @@ export class SpeechmaticsService {
     }
     const resultSpeechmaticsTimes = allTimes;
     return resultSpeechmaticsTimes;
-
   }
 
   getDurationsFromSpeechmaticsJSON() {
@@ -182,17 +203,5 @@ export class SpeechmaticsService {
     }
     const resultSpeechmaticsDurations = allDurations;
     return resultSpeechmaticsDurations;
-
   }
-
-  //   return this.http.get('src/assets/transcription_example.json')
-  //     .map((response) => {
-  //         console.log('Local transcription example words: ' + JSON.parse(JSON.stringify(response)).words);
-  //       const fullTranscription = JSON.parse(JSON.stringify(response)).words.join(' ');
-  //
-  //       return console.log(fullTranscription);
-  //       }
-  //     );
-  // }
-
 }

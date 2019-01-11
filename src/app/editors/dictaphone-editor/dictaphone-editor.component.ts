@@ -67,8 +67,17 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
 
   ngOnInit() {
     if (!this.speechmaticsService.transcriptionRequested) {
-      // this.speechmaticsService.postSpeechmaticsJob();
-      this.speechmaticsService.transcriptionRequested = true;
+      if (this.settingsService.projectsettings.plugins.speechmatics) {
+        this.speechmaticsService.userID = this.settingsService.projectsettings.plugins.speechmatics.userID;
+        this.speechmaticsService.authToken = this.settingsService.projectsettings.plugins.speechmatics.authToken;
+        this.speechmaticsService.postSpeechmaticsJob();
+        // this.speechmaticsService.getSpeechmaticsJobStatus();
+        this.speechmaticsService.transcriptionRequested = true;
+      } else {
+        console.log('No speech recognition data found in projectconfig.json (plugins).');
+      }
+    } else {
+      console.log('Sent audio to speech recognition already.');
     }
     this.audiomanager = this.audio.audiomanagers[0];
     this.audiochunk = this.audiomanager.mainchunk.clone();

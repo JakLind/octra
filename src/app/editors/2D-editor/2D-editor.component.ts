@@ -302,19 +302,13 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
       //   console.log('Samples aus gespeichertem segment: ' + samples);
       // }
       // else
-        if (this.transcrService.currentlevel.segments.get(this.selected_index - 1) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 1)).length > 1) {
-        temporaryIndex = this.selected_index - 1;
-        console.log('temporaryIndex: ' + temporaryIndex);
-      }
-      else if (this.transcrService.currentlevel.segments.get(this.selected_index - 2) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 2)).length > 1) {
-        temporaryIndex = this.selected_index - 2;
-      }
-      else if (this.transcrService.currentlevel.segments.get(this.selected_index - 4) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 4)).length > 1) {
-        temporaryIndex = this.selected_index - 4;
-      }
-        else if (this.transcrService.currentlevel.segments.get(this.selected_index) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index)).length > 1) {
-          temporaryIndex = this.selected_index;
+      for (let i = 1; i < this.transcrService.currentlevel.segments.length; i++) {
+        if (this.transcrService.currentlevel.segments.get(this.selected_index - i) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - i)).length > 1) {
+          temporaryIndex = this.selected_index - i;
+          console.log('temporaryIndex: ' + temporaryIndex);
+          break;
         }
+      }
       if (temporaryIndex >= 0) {
         console.log('temporaryIndex: ' + temporaryIndex);
 
