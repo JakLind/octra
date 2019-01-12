@@ -756,9 +756,9 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
     //TODO: When command comes form transcr-window, a different approach is needed to fill the text editor
     this.wordsService.getTotalWords(this.transcrService.currentlevel.segments.getFullTranscription());
     let resultString = this._rawText;
-    let finalI = this.wordsService.wordArray.length;
+    let finalI = 0;
     console.log(this.wordsService.wordArray.length);
-    if (this.wordsService.wordArray.length) {
+    if (this.wordsService.wordArray.length > 2) {
       resultString = this.transcrService.currentlevel.segments.getFullTranscription() + ' **';
       // Check last 5 words of fullTranscription and compare them with first 5 of speechmatics transcription
       for (let i = this.wordsService.wordArray.length - 5; i < this.speechmaticsService.resultSpeechmaticsWordsArray.length; i++) {
