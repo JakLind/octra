@@ -3,8 +3,15 @@ import {Segment, Segments} from '../../obj/Annotation';
 
 @Injectable()
 export class WordsService {
+  get wordArray(): any[] {
+    return this._wordArray;
+  }
 
-  private wordArray = [];
+  set wordArray(value: any[]) {
+    this._wordArray = value;
+  }
+
+  private _wordArray = [];
   // private wordsInTranscription: boolean;
   private wordPerSegmentArray = [];
   // private wordsInSegment: boolean;
@@ -19,15 +26,15 @@ export class WordsService {
   getTotalWords(transcription: string) {
     if (transcription) {
       // this.wordsInTranscription = true;
-      this.wordArray = transcription.split(' ');
-      console.log(this.wordArray);
-      for (let i = 0; i <= this.wordArray.length; i++) {
-        if (this.wordArray[i] === '') {
-          this.wordArray.splice(i, 1);
+      this._wordArray = transcription.split(' ');
+      console.log(this._wordArray);
+      for (let i = 0; i <= this._wordArray.length; i++) {
+        if (this._wordArray[i] === ('' || '<nib>' || '[int]' || '[spk]')) {
+          this._wordArray.splice(i, 1);
           i--;
         }
       }
-      return this.wordArray;
+      return this._wordArray;
     } else {
       // this.wordsInTranscription = false;
       return 'There is no transcription available, yet';
@@ -63,8 +70,8 @@ export class WordsService {
         i = segments.length;
       }
     }
-    if (this.wordArray.length !== 0 && transcribedSamples > 0) {
-      this.samplesPerWordOfFullTranscription = transcribedSamples / this.wordArray.length;
+    if (this._wordArray.length !== 0 && transcribedSamples > 0) {
+      this.samplesPerWordOfFullTranscription = transcribedSamples / this._wordArray.length;
     }
     return this.samplesPerWordOfFullTranscription;
   }

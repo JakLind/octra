@@ -1,16 +1,23 @@
 import {HttpClient, HttpRequest} from '@angular/common/http';
-import {Injectable} from '@angular/core';
+import {EventEmitter, Injectable} from '@angular/core';
 import {SettingsService} from './settings.service';
 import {AppStorageService} from './appstorage.service';
 
 @Injectable()
 export class SpeechmaticsService {
-  get transcriptionAddedAsSegments(): boolean {
-    return this._transcriptionAddedAsSegments;
+  get transcriptionReady(): boolean {
+    return this._transcriptionReady;
   }
 
-  set transcriptionAddedAsSegments(value: boolean) {
-    this._transcriptionAddedAsSegments = value;
+  set transcriptionReady(value: boolean) {
+    this._transcriptionReady = value;
+  }
+  get transcriptionInserted(): boolean {
+    return this._transcriptionInserted;
+  }
+
+  set transcriptionInserted(value: boolean) {
+    this._transcriptionInserted = value;
   }
   get jobStatus(): string {
     return this._jobStatus;
@@ -62,6 +69,9 @@ export class SpeechmaticsService {
     this._userID = value;
   }
 
+  transcriptionReadyToBeInserted = new EventEmitter<any>();
+
+
   constructor(private http: HttpClient,
               public settingsService: SettingsService,
               public appStorageService: AppStorageService) {}
@@ -71,7 +81,7 @@ export class SpeechmaticsService {
   private _authToken;
   private _wordsOfSpeechmaticsTranscription;
   private audiofile = this.appStorageService.file;
-  private jobID: number;
+  private jobID = 10634488;
   private _jobStatus: string;
   private resultOfPOST: string;
   private resultOfGET: string;
@@ -80,7 +90,8 @@ export class SpeechmaticsService {
   private _resultSpeechmaticsTimesArray: any[];
   private resultSpeechmaticsDurationsArray: any[];
   private _transcriptionRequested: boolean;
-  private _transcriptionAddedAsSegments: boolean;
+  private _transcriptionInserted: boolean;
+  private _transcriptionReady: boolean;
 
   postSpeechmaticsJob() {
     const params = new FormData();
@@ -149,9 +160,11 @@ export class SpeechmaticsService {
         if (this._jobStatus === 'done') {
           console.log('Finished GET JobStatus: ' + this._jobStatus);
           this.getSpeechmaticsTranscription();
+        } else if (this._jobStatus === 'expired') {
+          console.log('Finished GET. But JobStatus status is ' + this._jobStatus);
         } else {
-          console.log('Finished GET JobStatus: ' + this._jobStatus + 'Requesting again...');
-          this.getSpeechmaticsJobStatus();
+          console.log('JobStatus: ' + this._jobStatus + ' -> Requesting again until job is done...');
+          setTimeout(() => this.getSpeechmaticsJobStatus(), 600);
         }
       }
     );
@@ -171,6 +184,8 @@ export class SpeechmaticsService {
           this._resultSpeechmaticsWordsArray = this.getWordsFromSpeechmaticsJSON(this.resultOfGET);
           this._resultSpeechmaticsTimesArray = this.getTimesFromSpeechmaticsJSON();
           this.resultSpeechmaticsDurationsArray = this.getDurationsFromSpeechmaticsJSON();
+          this._transcriptionReady = true;
+          this.transcriptionReadyToBeInserted.emit();
         }
       );
   }
@@ -178,6 +193,12 @@ export class SpeechmaticsService {
   getWordsFromSpeechmaticsJSON(speechmaticsTranscription) {
     const allWords = [];
     this._wordsOfSpeechmaticsTranscription = JSON.parse(speechmaticsTranscription).words;
+    for (let i = 0; i < this._wordsOfSpeechmaticsTranscription.length; i++) {
+      if (this._wordsOfSpeechmaticsTranscription[i].name === '.') {
+        this._wordsOfSpeechmaticsTranscription.splice(i, 1);
+        i--;
+      }
+    }
     for (let i = 0; i < this._wordsOfSpeechmaticsTranscription.length; i++) {
       allWords[i] = this._wordsOfSpeechmaticsTranscription[i].name;
     }

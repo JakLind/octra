@@ -53,7 +53,6 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
   public get projectsettings(): any {
     return this.settingsService.projectsettings;
   }
-
   constructor(public audio: AudioService,
               public keyMap: KeymappingService,
               public transcrService: TranscriptionService,
@@ -70,8 +69,8 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
       if (this.settingsService.projectsettings.plugins.speechmatics) {
         this.speechmaticsService.userID = this.settingsService.projectsettings.plugins.speechmatics.userID;
         this.speechmaticsService.authToken = this.settingsService.projectsettings.plugins.speechmatics.authToken;
-        this.speechmaticsService.postSpeechmaticsJob();
-        // this.speechmaticsService.getSpeechmaticsJobStatus();
+        // this.speechmaticsService.postSpeechmaticsJob();
+        this.speechmaticsService.getSpeechmaticsJobStatus();
         this.speechmaticsService.transcriptionRequested = true;
       } else {
         console.log('No speech recognition data found in projectconfig.json (plugins).');
@@ -447,6 +446,17 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
 
     }
 */
+  }
+
+  onSpeechmaticsReady() {
+    this.editor.update();
+    this.editor.focus(false);
+  }
+
+  onSpeechmaticsInserted() {
+    //TODO: SaveTranscript() throws out some words
+    this.saveTranscript();
+    this.highlight();
   }
 
   private loadEditor() {

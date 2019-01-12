@@ -37,7 +37,7 @@ import {AudioNavigationComponent} from '../../media-components/components/audio/
 import {Line} from '../../media-components/obj';
 import {AudioManager} from '../../media-components/obj/media/audio/AudioManager';
 import {Functions} from '../../core/shared/Functions';
-import {WordsService} from '../../core/shared/service/words.service';
+import {SpeechmaticsService} from '../../core/shared/service/speechmatics.service';
 
 @Component({
   selector: 'app-overlay-gui',
@@ -88,7 +88,6 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
   private factor = 8;
   private scrolltimer: Subscription = null;
   private shortcuts: any = {};
-  private transcribedSegments = 0;
 
   public get editor(): TranscrEditorComponent {
     if ((this.window === null || this.window === undefined)) {
@@ -117,12 +116,25 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
               public msg: MessageService,
               public settingsService: SettingsService,
               public appStorage: AppStorageService,
-              private wordsService: WordsService) {
+              private speechmaticsService: SpeechmaticsService) {
 
     this.subscrmanager = new SubscriptionManager();
   }
 
   ngOnInit() {
+    if (!this.speechmaticsService.transcriptionRequested) {
+      if (this.settingsService.projectsettings.plugins.speechmatics) {
+        this.speechmaticsService.userID = this.settingsService.projectsettings.plugins.speechmatics.userID;
+        this.speechmaticsService.authToken = this.settingsService.projectsettings.plugins.speechmatics.authToken;
+        // this.speechmaticsService.postSpeechmaticsJob();
+        this.speechmaticsService.getSpeechmaticsJobStatus();
+        this.speechmaticsService.transcriptionRequested = true;
+      } else {
+        console.log('No speech recognition data found in projectconfig.json (plugins).');
+      }
+    } else {
+      console.log('Sent audio to speech recognition already.');
+    }
     this.audiomanager = this.audio.audiomanagers[0];
     this.audiochunk_lines = this.audiomanager.mainchunk.clone();
     this.audiochunk_loupe = this.audiomanager.mainchunk.clone();
@@ -265,91 +277,6 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
         this.viewer.focused = false;
         this.showWindow = true;
       }
-    }
-  }
-
-  public onSelectionChanged(caretpos) {
-    if (!this.audiochunk_window.isPlaying) {
-
-/*
-      for (let i = 0; i < this.transcrService.currentlevel.segments.segments.length; i++) {
-        if (this.transcrService.currentlevel.segments.get(i).transcript) {
-          this.transcribedSegments++;
-        }
-      }
-*/
-
-      // console.log('Anzahl transcr Segments: ' + this.transcribedSegments);
-      this.selected_index = this.window.segment_index;
-      console.log('Selected segment: ' + this.selected_index);
-      let segmentStart = 0;
-      let samples = 0;
-      let temporaryIndex;
-      console.log(this.transcrService.currentlevel.segments.get(this.selected_index - 1) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - 1)).length > 1);
-
-      console.log('Caretpos: ' + caretpos);
-      // if (segment.transcript) {
-      //   console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
-      //
-      //   const lengthOfCurrentSegment = segment.transcript.length;
-      //   console.log('Length of transcript of current segment: ' + lengthOfCurrentSegment);
-      //
-      //   const wordsOfSegment = this.wordsService.getWordsPerSegment(segment).length;
-      //   console.log('Words of segment: ' + wordsOfSegment);
-      //
-      //   samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfCurrentSegment, wordsOfSegment, true, this.transcrService.audiofile.samplerate);
-      //   // const samples = (seg_num > 0) ? this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples : 0;
-      //   console.log('Samples aus gespeichertem segment: ' + samples);
-      // }
-      // else
-      for (let i = 1; i < this.transcrService.currentlevel.segments.length; i++) {
-        if (this.transcrService.currentlevel.segments.get(this.selected_index - i) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(this.selected_index - i)).length > 1) {
-          temporaryIndex = this.selected_index - i;
-          console.log('temporaryIndex: ' + temporaryIndex);
-          break;
-        }
-      }
-      if (temporaryIndex >= 0) {
-        console.log('temporaryIndex: ' + temporaryIndex);
-
-        const segment = this.transcrService.currentlevel.segments.get(temporaryIndex);
-
-        console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
-
-        const lengthOfPreviousSegment = segment.transcript.length;
-        console.log('Length of transcript of previous segment: ' + lengthOfPreviousSegment);
-
-        const wordsOfPreviousSegment = this.wordsService.getWordsPerSegment(segment).length;
-        console.log('Words of segment: ' + wordsOfPreviousSegment);
-
-        samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfPreviousSegment, wordsOfPreviousSegment, false, this.transcrService.audiofile.samplerate);
-        // const samples = (seg_num > 0) ? this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples : 0;
-        console.log('Samples aus ungespeichertem Segment: ' + samples);
-
-        // segmentStart = this.transcrService.currentlevel.segments.get(this.selected_index - 1).time.samples;
-        // console.log('Segment sample start time: ' + segmentStart);
-      }
-      if (samples) {
-        if (this.transcrService.currentlevel.segments.get(this.selected_index - 1)) {
-          segmentStart = this.transcrService.currentlevel.segments.get(this.selected_index - 1).time.samples;
-        }
-
-        const newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
-        console.log('New start sample position: ' + newStartSamplePosition);
-
-        const start = new AudioTime(newStartSamplePosition, this.audiochunk_window.audiomanager.ressource.info.samplerate);
-        if (start.samples < this.window.audiochunk.selection.end.samples) {
-
-          this.window.audiochunk.startpos = start;
-          this.window.loupe.viewer.drawPlayCursor();
-        }
-        console.log('this.audiochunk.selection.start: ' + this.window.audiochunk.selection.start);
-        console.log('this.audiochunk.selection.end: ' + this.window.audiochunk.selection.end);
-
-      } else {
-        console.log('No characters in segment, yet.');
-      }
-
     }
   }
 

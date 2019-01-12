@@ -11,6 +11,7 @@ import {TimespanPipe} from '../../../media-components/pipe';
 import {AudioManager} from '../../../media-components/obj/media/audio/AudioManager';
 import {Functions} from '../../shared/Functions';
 import {SpeechmaticsService} from '../../shared/service/speechmatics.service';
+import {WordsService} from '../../shared/service/words.service';
 
 declare let lang: any;
 declare let document: any;
@@ -87,7 +88,8 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
   constructor(private cd: ChangeDetectorRef,
               private langService: TranslateService,
               private transcrService: TranscriptionService,
-              private speechmaticsService: SpeechmaticsService) {
+              private speechmaticsService: SpeechmaticsService,
+              private wordsService: WordsService) {
 
     this._settings = new TranscrEditorConfig().Settings;
     this.subscrmanager = new SubscriptionManager();
@@ -101,6 +103,8 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
   @Output('boundaryclicked') boundaryclicked: EventEmitter<number> = new EventEmitter<number>();
   @Output('boundaryinserted') boundaryinserted: EventEmitter<number> = new EventEmitter<number>();
   @Output('selectionchanged') selectionchanged: EventEmitter<number> = new EventEmitter<number>();
+  @Output('speechmaticsready') speechmaticsready: EventEmitter<any> = new EventEmitter<any>();
+  @Output('speechmaticsInserted') speechmaticsinserted: EventEmitter<any> = new EventEmitter<any>();
 
   @Input() visible = true;
   @Input() markers: any = true;
@@ -354,6 +358,16 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
 
     jQuery('.transcr-editor .note-editable.card-block').css('font-size', this.transcrService.defaultFontSize + 'px');
     this.loaded.emit(true);
+    this.speechmaticsService.transcriptionReadyToBeInserted
+      .subscribe(
+        () => {
+          if (!this.speechmaticsIconSet) {
+            this.speechmaticsIconSet = true;
+            this.speechmaticsready.emit();
+            console.log('showing speechmatics icon and speechmaticsready.emit');
+          }
+        }
+      );
   }
   /**
    * inserts a marker to the editors html
@@ -397,25 +411,10 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
       if (this.isDisabledKey(comboKey)) {
         $event.preventDefault();
       } else {
-        if (comboKey === 'ALT + T' && this.speechmaticsService.resultSpeechmaticsWordsArray) {
+        if (comboKey === 'ALT + T' && this.speechmaticsService.transcriptionReady) {
+          // add speechmatics transcription
           $event.preventDefault();
-          console.log('Ich werd ausgeführt - HURRA!');
-          // onSendToTextEditor() {
-          for (let i = 0; i < this.speechmaticsService.resultSpeechmaticsWordsArray.length; i++) {
-            const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[i] * this.transcrService.audiofile.samplerate);
-            console.log('time: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[i]);
-            console.log('round: ' + time_samples);
-            console.log('word: ' + this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
-            console.log('audiofile lastsample: ' + this.transcrService.last_sample);
-            if (!this.speechmaticsService.resultSpeechmaticsTimesArray[i]) {
-              const lastSegment = this.transcrService.currentlevel.segments.segments.length - 1;
-              this.transcrService.currentlevel.segments.segments[lastSegment].transcript = '<P>';
-            }
-            if (this.speechmaticsService.resultSpeechmaticsWordsArray[i] !== '.') {
-              this.transcrService.currentlevel.segments.add(time_samples, this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
-            }
-          }
-          // }
+          this.insertSpeechmaticsTranscription();
         } else if (comboKey === 'ALT + S' && this.Settings.special_markers.boundary) {
           // add boundary
           this.insertBoundary('assets/img/components/transcr-editor/boundary.png');
@@ -730,7 +729,7 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
 
     result.push(fontSizeDown);
 
-    if (this.speechmaticsService.resultSpeechmaticsWordsArray) {
+    if (this.speechmaticsService.transcriptionReady) {
       // create speechmatics button
       const speechmatics = () => {
         // create button
@@ -739,25 +738,7 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
           tooltip: 'insert speech recognition transcription',
           container: false,
           click: () => {
-            // Finds last word in current transcription
-            // const lastWordInTranscription = this.transcrService.currentlevel.segments.segments[this.transcrService.currentlevel.segments.length - 1].transcript;
-            // console.log('last word in transcr: ' + lastWordInTranscription);
-
-            for (let i = 0; i < this.speechmaticsService.resultSpeechmaticsWordsArray.length; i++) {
-              const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[i] * this.transcrService.audiofile.samplerate);
-              console.log('time: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[i]);
-              console.log('round: ' + time_samples);
-              console.log('word: ' + this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
-              console.log('audiofile lastsample: ' + this.transcrService.last_sample);
-              if (!this.speechmaticsService.resultSpeechmaticsTimesArray[i]) {
-                const lastSegment = this.transcrService.currentlevel.segments.segments.length - 1;
-                this.transcrService.currentlevel.segments.segments[lastSegment].transcript = '<P>';
-              }
-              if (this.speechmaticsService.resultSpeechmaticsWordsArray[i] !== '.') {
-                this.transcrService.currentlevel.segments.add(time_samples, this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
-              }
-            }
-            //TODO: Update text editor of opened editor (2D/linear/dictaphone)
+            this.insertSpeechmaticsTranscription();
           }
         };
         const button = jQuery.summernote.ui.button(btn_js);
@@ -769,6 +750,49 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     return result;
+  }
+
+  insertSpeechmaticsTranscription() {
+    //TODO: When command comes form transcr-window, a different approach is needed to fill the text editor
+    this.wordsService.getTotalWords(this.transcrService.currentlevel.segments.getFullTranscription());
+    let resultString = this._rawText;
+    let finalI = this.wordsService.wordArray.length;
+    console.log(this.wordsService.wordArray.length);
+    if (this.wordsService.wordArray.length) {
+      resultString = this.transcrService.currentlevel.segments.getFullTranscription() + ' **';
+      // Check last 5 words of fullTranscription and compare them with first 5 of speechmatics transcription
+      for (let i = this.wordsService.wordArray.length - 5; i < this.speechmaticsService.resultSpeechmaticsWordsArray.length; i++) {
+        for (let j = i; j < this.wordsService.wordArray.length; j++) {
+          console.log(this.wordsService.wordArray[j]);
+          console.log(this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
+          console.log(this.wordsService.wordArray[j] === this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
+
+          // if 2 words following each other match, take the index of the first word to start concatenation of speechmatics transcription
+          if (this.wordsService.wordArray[j] === this.speechmaticsService.resultSpeechmaticsWordsArray[i]
+            && this.wordsService.wordArray[j + 1] === this.speechmaticsService.resultSpeechmaticsWordsArray[i + 1]) {
+              finalI = j;
+              console.log('matchcount ist 0 und finalI ist: ' + finalI);
+              break;
+          }
+        }
+      }
+    }
+    for (let k = finalI; k < this.speechmaticsService.resultSpeechmaticsWordsArray.length; k++) {
+      const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[k] * this.transcrService.audiofile.samplerate);
+      // console.log('time: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[k]);
+      // console.log('round: ' + time_samples);
+      // console.log('word: ' + this.speechmaticsService.resultSpeechmaticsWordsArray[k]);
+      // console.log('audiofile lastsample: ' + this.transcrService.last_sample);
+
+      if (!this.speechmaticsService.resultSpeechmaticsTimesArray[k]) {
+        resultString += this.speechmaticsService.resultSpeechmaticsWordsArray[k];
+      } else {
+        resultString += this.speechmaticsService.resultSpeechmaticsWordsArray[k] + '{' + time_samples + '}';
+      }
+    }
+    this.rawText = resultString;
+    // this.typing.emit('stopped');
+    this.speechmaticsinserted.emit();
   }
 
   insertBoundary(img_url: string) {
@@ -890,11 +914,6 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
    */
   updateTextField() {
     this._rawText = this.getRawText();
-    if (this.speechmaticsService.resultSpeechmaticsWordsArray && !this.speechmaticsIconSet) {
-      this.update()
-      this.speechmaticsIconSet = true;
-      this.focus(false);
-    }
     jQuery('.transcr-editor .note-editable.card-block').css('font-size', this.transcrService.defaultFontSize + 'px');
   }
 
