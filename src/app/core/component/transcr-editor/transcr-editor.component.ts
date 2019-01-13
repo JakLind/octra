@@ -755,44 +755,50 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
   insertSpeechmaticsTranscription() {
     //TODO: When command comes form transcr-window, a different approach is needed to fill the text editor
     this.wordsService.getTotalWords(this.transcrService.currentlevel.segments.getFullTranscription());
+    if (this.wordsService.wordArray.length <= this.speechmaticsService.resultSpeechmaticsWordsArray.length) {
     let resultString = this._rawText;
     let finalI = 0;
-    console.log(this.wordsService.wordArray.length);
-    if (this.wordsService.wordArray.length > 2) {
-      resultString = this.transcrService.currentlevel.segments.getFullTranscription() + ' **';
-      // Check last 5 words of fullTranscription and compare them with first 5 of speechmatics transcription
-      for (let i = this.wordsService.wordArray.length - 5; i < this.speechmaticsService.resultSpeechmaticsWordsArray.length; i++) {
-        for (let j = i; j < this.wordsService.wordArray.length; j++) {
-          console.log(this.wordsService.wordArray[j]);
-          console.log(this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
-          console.log(this.wordsService.wordArray[j] === this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
+    console.log('wordsArrayLength: ' + this.wordsService.wordArray.length);
+    console.log('SpeechmaticsWordsArrayLength: ' + this.speechmaticsService.resultSpeechmaticsWordsArray.length);
 
-          // if 2 words following each other match, take the index of the first word to start concatenation of speechmatics transcription
-          if (this.wordsService.wordArray[j] === this.speechmaticsService.resultSpeechmaticsWordsArray[i]
-            && this.wordsService.wordArray[j + 1] === this.speechmaticsService.resultSpeechmaticsWordsArray[i + 1]) {
+      if (this.wordsService.wordArray.length > 2) {
+        resultString = this.transcrService.currentlevel.segments.getFullTranscription() + ' **';
+        // Check last 5 words of fullTranscription and compare them with first 5 of speechmatics transcription
+        for (let i = this.wordsService.wordArray.length - 5; i < this.speechmaticsService.resultSpeechmaticsWordsArray.length; i++) {
+          for (let j = i; j < this.wordsService.wordArray.length; j++) {
+            console.log(this.wordsService.wordArray[j]);
+            console.log(this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
+            console.log(this.wordsService.wordArray[j] === this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
+
+            // if 2 words following each other match, take the index of the first word to start concatenation of speechmatics transcription
+            if (this.wordsService.wordArray[j] === this.speechmaticsService.resultSpeechmaticsWordsArray[i]
+              && this.wordsService.wordArray[j + 1] === this.speechmaticsService.resultSpeechmaticsWordsArray[i + 1]) {
               finalI = j;
               console.log('matchcount ist 0 und finalI ist: ' + finalI);
               break;
+            }
           }
         }
       }
-    }
-    for (let k = finalI; k < this.speechmaticsService.resultSpeechmaticsWordsArray.length; k++) {
-      const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[k] * this.transcrService.audiofile.samplerate);
-      // console.log('time: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[k]);
-      // console.log('round: ' + time_samples);
-      // console.log('word: ' + this.speechmaticsService.resultSpeechmaticsWordsArray[k]);
-      // console.log('audiofile lastsample: ' + this.transcrService.last_sample);
+      for (let k = finalI; k < this.speechmaticsService.resultSpeechmaticsWordsArray.length; k++) {
+        const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[k] * this.transcrService.audiofile.samplerate);
+        // console.log('time: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[k]);
+        // console.log('round: ' + time_samples);
+        // console.log('word: ' + this.speechmaticsService.resultSpeechmaticsWordsArray[k]);
+        // console.log('audiofile lastsample: ' + this.transcrService.last_sample);
 
-      if (!this.speechmaticsService.resultSpeechmaticsTimesArray[k]) {
-        resultString += this.speechmaticsService.resultSpeechmaticsWordsArray[k];
-      } else {
-        resultString += this.speechmaticsService.resultSpeechmaticsWordsArray[k] + '{' + time_samples + '}';
+        if (!this.speechmaticsService.resultSpeechmaticsTimesArray[k]) {
+          resultString += this.speechmaticsService.resultSpeechmaticsWordsArray[k];
+        } else {
+          resultString += this.speechmaticsService.resultSpeechmaticsWordsArray[k] + '{' + time_samples + '}';
+        }
       }
+      this.rawText = resultString;
+      // this.typing.emit('stopped');
+      this.speechmaticsinserted.emit();
+    } else {
+      console.log('There were already as many or more words transcribed that speech recognition could provide.');
     }
-    this.rawText = resultString;
-    // this.typing.emit('stopped');
-    this.speechmaticsinserted.emit();
   }
 
   insertBoundary(img_url: string) {
