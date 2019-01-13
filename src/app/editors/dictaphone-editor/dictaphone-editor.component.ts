@@ -344,23 +344,23 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
 
       if (!this.audiochunk.isPlaying) {
         const seg_num = this.editor.getSegmentByCaretPos(caretpos);
-        console.log('Seg Num: ' + seg_num);
-        if (seg_num < 0) {
-          this.transcrService.currentlevel.segments.add(this.transcrService.last_sample - 1, '');
-          this.transcrService.currentlevel.segments.segments[0].transcript = this.transcrService.currentlevel.segments.segments[1].transcript;
-          this.transcrService.currentlevel.segments.segments[1].transcript = '<P>';
-          this.update();
-        } else {
-          let segment;
-          let segmentStart = 0;
-          let samples = 0;
-
-          if (seg_num > -1 && this.transcrService.currentlevel.segments.get(seg_num).transcript) {
-            //   segment = this.transcrService.currentlevel.segments.get(seg_num);
-            //   console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
+            //         console.log('Seg Num: ' + seg_num);
+            //         if (seg_num < 0) {
+            //           this.transcrService.currentlevel.segments.add(this.transcrService.last_sample - 1, '');
+            //           this.transcrService.currentlevel.segments.segments[0].transcript = this.transcrService.currentlevel.segments.segments[1].transcript;
+            //           this.transcrService.currentlevel.segments.segments[1].transcript = '<P>';
+            //           this.update();
+            //         } else {
+            //           let segment;
+            //           let segmentStart = 0;
+            //           let samples = 0;
             //
-            //   const lengthOfCurrentSegment = segment.transcript.length;
-            //   console.log('Length of transcript of current segment: ' + lengthOfCurrentSegment);
+            //           if (seg_num > -1 && this.transcrService.currentlevel.segments.get(seg_num).transcript) {
+            //             //   segment = this.transcrService.currentlevel.segments.get(seg_num);
+            //             //   console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
+            //             //
+            //             //   const lengthOfCurrentSegment = segment.transcript.length;
+            //             //   console.log('Length of transcript of current segment: ' + lengthOfCurrentSegment);
             //
             //   const wordsOfSegment = this.wordsService.getWordsPerSegment(segment).length;
             //   console.log('Words of segment: ' + wordsOfSegment);
@@ -457,6 +457,11 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
     //TODO: SaveTranscript() throws out some words
     this.saveTranscript();
     this.highlight();
+  }
+
+  onPlaypositionChanged(start) {
+    // this.audiochunk.startpos = start;
+    // this.audioplayer.update();
   }
 
   private loadEditor() {

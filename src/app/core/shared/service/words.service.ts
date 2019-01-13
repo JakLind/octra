@@ -107,9 +107,9 @@ export class WordsService {
   getSamplesPerCharacter(lengthOfTranscription: number, totalWordsOfTranscription: number) {
     let samplesPerCharacter = 0;
     if (totalWordsOfTranscription !== 0) {
-      const charactersPerWord = lengthOfTranscription / totalWordsOfTranscription;
+      const charactersPerWord = Math.round(lengthOfTranscription / totalWordsOfTranscription);
       console.log('charactersPerWord of full transcription: ' + charactersPerWord);
-      samplesPerCharacter = this.samplesPerWordOfFullTranscription / charactersPerWord;
+      samplesPerCharacter = Math.round(this.samplesPerWordOfFullTranscription / charactersPerWord);
       console.log('samplesPerCharacter of full transcription: ' + samplesPerCharacter);
     }
     return samplesPerCharacter;

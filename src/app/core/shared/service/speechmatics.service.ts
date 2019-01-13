@@ -108,36 +108,7 @@ export class SpeechmaticsService {
     this.http.request(req)
       .subscribe(
         (response) => this.resultOfPOST = JSON.stringify(response),
-        (error) => {
-          switch (error.error.code) {
-            case 400:
-              console.log('Could not sent audio to speech recognition. The following error occurred: ' + error.error.error);
-              break;
-            case 401:
-              console.log('Could not sent audio to speech recognition. Check your projectconfig.json (plugins). ' + error.error.error);
-              break;
-            case 403:
-              console.log('Unsupported audio format or insufficient credit: ' + error.error.error);
-              break;
-            case 404:
-              console.log('There was an error while trying to sent audio to speech recognition: ' + error.error.error);
-              break;
-            case 429:
-              console.log('Too many requests were sent to speech recognition. Please try again later. ' + error.error.error);
-              break;
-            case 500:
-              console.log('There is a problem with the speech recognition server.Please try again later. ' + error.error.error);
-              break;
-            case 502:
-              console.log('The speech recognition server is not active at present. Please try again later. ' + error.error.error);
-              break;
-            case 503:
-              console.log('The speech recognition service is temporarily unavailable. Please try again later. ' + error.error.error);
-              break;
-            default:
-              console.log(error);
-          }
-        },
+        (error) => this.errorHandling(error),
         () => {
           console.log('Finished POST');
           this.jobID = JSON.parse(this.resultOfPOST).body.id;
@@ -154,7 +125,7 @@ export class SpeechmaticsService {
       '/?auth_token=' + this._authToken).
     subscribe(
       (response) => this.resultOfGetJobStatus = JSON.stringify(response),
-      (error) => console.log(error),
+      (error) => this.errorHandling(error),
       () => {
         this._jobStatus = JSON.parse(this.resultOfGetJobStatus).job.job_status;
         if (this._jobStatus === 'done') {
@@ -178,7 +149,7 @@ export class SpeechmaticsService {
       + '/transcript?auth_token=' + this._authToken)
       .subscribe(
         data => this.resultOfGET = JSON.stringify(data),
-        error => console.log(error),
+        error => this.errorHandling(error),
         () => {
           console.log('Finished GET');
           this._resultSpeechmaticsWordsArray = this.getWordsFromSpeechmaticsJSON(this.resultOfGET);
@@ -210,8 +181,8 @@ export class SpeechmaticsService {
   getTimesFromSpeechmaticsJSON() {
     const allTimes = [];
     allTimes[0] = 0;
-    for (let i = 0; i < this._wordsOfSpeechmaticsTranscription.length - 1; i++) {
-      allTimes[i] = this._wordsOfSpeechmaticsTranscription[i + 1].time;
+    for (let i = 0; i < this._wordsOfSpeechmaticsTranscription.length; i++) {
+      allTimes[i] = this._wordsOfSpeechmaticsTranscription[i].time;
     }
     const resultSpeechmaticsTimes = allTimes;
     return resultSpeechmaticsTimes;
@@ -224,5 +195,36 @@ export class SpeechmaticsService {
     }
     const resultSpeechmaticsDurations = allDurations;
     return resultSpeechmaticsDurations;
+  }
+
+  errorHandling(error) {
+    switch (error.error.code) {
+      case 400:
+        console.log('Could not sent audio to speech recognition. The following error occurred: ' + error.error.error);
+        break;
+      case 401:
+        console.log('Could not sent audio to speech recognition. Check your projectconfig.json (plugins). ' + error.error.error);
+        break;
+      case 403:
+        console.log('Unsupported audio format or insufficient credit: ' + error.error.error);
+        break;
+      case 404:
+        console.log('There was an error while trying to sent audio to speech recognition: ' + error.error.error);
+        break;
+      case 429:
+        console.log('Too many requests were sent to speech recognition. Please try again later. ' + error.error.error);
+        break;
+      // case 500:
+      //   console.log('There is a problem with the speech recognition server.Please try again later. ' + error.error.error);
+      //   break;
+      // case 502:
+      //   console.log('The speech recognition server is not active at present. Please try again later. ' + error.error.error);
+      //   break;
+      // case 503:
+      //   console.log('The speech recognition service is temporarily unavailable. Please try again later. ' + error.error.error);
+      //   break;
+      default:
+        console.log(error);
+    }
   }
 }
