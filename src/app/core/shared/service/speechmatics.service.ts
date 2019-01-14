@@ -81,7 +81,7 @@ export class SpeechmaticsService {
   private _authToken;
   private _wordsOfSpeechmaticsTranscription;
   private audiofile = this.appStorageService.file;
-  private jobID = 10634488;
+  private jobID = 10648282;
   private _jobStatus: string;
   private resultOfPOST: string;
   private resultOfGET: string;

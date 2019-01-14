@@ -29,7 +29,7 @@ export class WordsService {
       this._wordArray = transcription.split(' ');
       console.log(this._wordArray);
       for (let i = 0; i <= this._wordArray.length; i++) {
-        if (this._wordArray[i] === ('' || '<nib>' || '[int]' || '[spk]')) {
+        if (this._wordArray[i] === ('' || '<nib>')) {
           this._wordArray.splice(i, 1);
           i--;
         }
@@ -46,9 +46,8 @@ export class WordsService {
     // if (segment.transcript) {
     //   this.wordsInSegment = true;
     this.wordPerSegmentArray = segment.transcript.split(' ');
-    console.log(this.wordPerSegmentArray);
     for (let i = 0; i <= this.wordPerSegmentArray.length; i++) {
-      if (this.wordPerSegmentArray[i] === '') {
+      if (this.wordPerSegmentArray[i] === ('' || '<nib>')) {
         this.wordPerSegmentArray.splice(i, 1);
         i--;
       }

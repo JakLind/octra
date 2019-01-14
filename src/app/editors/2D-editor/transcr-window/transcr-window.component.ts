@@ -652,7 +652,9 @@ export class TranscrWindowComponent implements OnInit, AfterContentInit, AfterVi
   }
 
   onSpeechmaticsReady() {
+    const rawText = this.editor.getRawText();
     this.editor.update();
+    this.editor.rawText = rawText;
     this.editor.focus(false);
   }
 

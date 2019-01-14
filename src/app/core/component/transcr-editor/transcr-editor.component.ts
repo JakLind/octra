@@ -765,12 +765,6 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
 
       console.log(segmentIndex);
       let start = 0;
-      // for (let i = 0; i < this.transcrService.currentlevel.segments.length; i++) {
-      //   if (currentSegment.transcript) {
-      //     resultString += this._rawText + ' **';
-      //   } else if (this._rawText) {
-      //
-      //   }
       if (!this._rawText) {
         resultString = this._rawText;
       }
@@ -783,7 +777,6 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
 
         if (start <= this.speechmaticsService.resultSpeechmaticsTimesArray[j]
           && this.speechmaticsService.resultSpeechmaticsTimesArray[j] < currentSegment.time.seconds) {
-          // const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[j] * this.transcrService.audiofile.samplerate);
           console.log('segment seconds: ' + currentSegment.time.seconds);
           console.log('speechmatics seconds: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[j]);
           resultString += this.speechmaticsService.resultSpeechmaticsWordsArray[j] + ' ';
@@ -793,108 +786,56 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
     } else {
 
       this.wordsService.getTotalWords(this.transcrService.currentlevel.segments.getFullTranscription());
-      if (this.wordsService.wordArray.length <= this.speechmaticsService.resultSpeechmaticsWordsArray.length) {
-        resultString = this._rawText;
-        let finalI = 0;
-        let backupI = 0;
-        console.log('wordsArrayLength: ' + this.wordsService.wordArray.length);
-        console.log('SpeechmaticsWordsArrayLength: ' + this.speechmaticsService.resultSpeechmaticsWordsArray.length);
+      resultString = this._rawText;
+      let finalI = 0;
+      let backupI = 0;
+      console.log('wordsArrayLength: ' + this.wordsService.wordArray.length);
+      console.log('SpeechmaticsWordsArrayLength: ' + this.speechmaticsService.resultSpeechmaticsWordsArray.length);
 
-        if (this.wordsService.wordArray.length > 2) {
-          resultString += ' **';
-          // Check last 5 words of fullTranscription and compare them with first 5 of speechmatics transcription
-          let matchCount = 0;
-          for (let i = this.wordsService.wordArray.length - 5; i < this.speechmaticsService.resultSpeechmaticsWordsArray.length; i++) {
-            for (let j = i; j < this.wordsService.wordArray.length; j++) {
-              console.log(this.wordsService.wordArray[j]);
-              console.log(this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
-              console.log(this.wordsService.wordArray[j] === this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
-              // take matchCount value as backup
-              if (this.wordsService.wordArray[j] === this.speechmaticsService.resultSpeechmaticsWordsArray[i]) {
-                backupI = j;
-                matchCount++;
-              }
-              // if 2 words following each other match, take the index of the first word to start concatenation of speechmatics transcription
-              if (this.wordsService.wordArray[j] === this.speechmaticsService.resultSpeechmaticsWordsArray[i]
-                && this.wordsService.wordArray[j + 1] === this.speechmaticsService.resultSpeechmaticsWordsArray[i + 1]) {
-                finalI = j;
-                console.log('matchcount ist 0 und finalI ist: ' + finalI);
-                break;
-              }
+      if (this.wordsService.wordArray.length > 1 && this.wordsService.wordArray[1] !== '') {
+        resultString += ' **';
+        // Check last 5 words of fullTranscription and compare them with first 5 of speechmatics transcription
+        let matchCount = 0;
+        const startI = Math.abs(5 - this.wordsService.wordArray.length);
+        for (let i = startI; i < this.wordsService.wordArray.length; i++) {
+          for (let j = startI; j < this.wordsService.wordArray.length; j++) {
+            console.log(this.wordsService.wordArray[i]);
+            console.log(this.speechmaticsService.resultSpeechmaticsWordsArray[j]);
+            console.log(this.wordsService.wordArray[i] === this.speechmaticsService.resultSpeechmaticsWordsArray[j]);
+            // take matchCount value as backup
+            if (this.wordsService.wordArray[i] === this.speechmaticsService.resultSpeechmaticsWordsArray[j] && matchCount === 0) {
+              backupI = j;
+              matchCount++;
+            }
+            // if 2 words following each other match, take the index of the first word to start concatenation of speechmatics transcription
+            if (this.wordsService.wordArray[i] === this.speechmaticsService.resultSpeechmaticsWordsArray[j]
+              && this.wordsService.wordArray[i + 1] === this.speechmaticsService.resultSpeechmaticsWordsArray[j + 1]) {
+              finalI = j;
+              console.log('true für 2 aufeinanderfolgende Worte. finalI ist: ' + finalI);
+              break;
             }
           }
-          if (matchCount === 1 && finalI === 0) {
-            finalI = backupI;
-          }
         }
-        for (let k = finalI; k < this.speechmaticsService.resultSpeechmaticsWordsArray.length; k++) {
-          const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[k] * this.transcrService.audiofile.samplerate);
-          // console.log('time: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[k]);
-          // console.log('round: ' + time_samples);
-          // console.log('word: ' + this.speechmaticsService.resultSpeechmaticsWordsArray[k]);
-          // console.log('audiofile lastsample: ' + this.transcrService.last_sample);
-          if (k === finalI) {
-            resultString += this.speechmaticsService.resultSpeechmaticsWordsArray[k];
-          } else {
-            resultString += '{' + time_samples + '}' + this.speechmaticsService.resultSpeechmaticsWordsArray[k];
-          }
+        if (finalI === 0) {
+          finalI = backupI;
+        }
+
+      }
+      for (let k = finalI; k < this.speechmaticsService.resultSpeechmaticsWordsArray.length; k++) {
+        const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[k] * this.transcrService.audiofile.samplerate);
+        // console.log('time: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[k]);
+        // console.log('round: ' + time_samples);
+        // console.log('word: ' + this.speechmaticsService.resultSpeechmaticsWordsArray[k]);
+        // console.log('audiofile lastsample: ' + this.transcrService.last_sample);
+        if (k === finalI) {
+          resultString += this.speechmaticsService.resultSpeechmaticsWordsArray[k];
+        } else {
+          resultString += '{' + time_samples + '}' + this.speechmaticsService.resultSpeechmaticsWordsArray[k];
         }
       }
     }
-
-
-      // }
-      this.rawText = resultString;
-      this.speechmaticsinserted.emit();
-
-
-
-    //
-    // //TODO: When command comes form transcr-window, a different approach is needed to fill the text editor
-    // this.wordsService.getTotalWords(this.transcrService.currentlevel.segments.getFullTranscription());
-    // if (this.wordsService.wordArray.length <= this.speechmaticsService.resultSpeechmaticsWordsArray.length) {
-    // let resultString = this._rawText;
-    // let finalI = 0;
-    // console.log('wordsArrayLength: ' + this.wordsService.wordArray.length);
-    // console.log('SpeechmaticsWordsArrayLength: ' + this.speechmaticsService.resultSpeechmaticsWordsArray.length);
-    //
-    //   if (this.wordsService.wordArray.length > 2) {
-    //     resultString = this.transcrService.currentlevel.segments.getFullTranscription() + ' **';
-    //     // Check last 5 words of fullTranscription and compare them with first 5 of speechmatics transcription
-    //     for (let i = this.wordsService.wordArray.length - 5; i < this.speechmaticsService.resultSpeechmaticsWordsArray.length; i++) {
-    //       for (let j = i; j < this.wordsService.wordArray.length; j++) {
-    //         console.log(this.wordsService.wordArray[j]);
-    //         console.log(this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
-    //         console.log(this.wordsService.wordArray[j] === this.speechmaticsService.resultSpeechmaticsWordsArray[i]);
-    //
-    //         // if 2 words following each other match, take the index of the first word to start concatenation of speechmatics transcription
-    //         if (this.wordsService.wordArray[j] === this.speechmaticsService.resultSpeechmaticsWordsArray[i]
-    //           && this.wordsService.wordArray[j + 1] === this.speechmaticsService.resultSpeechmaticsWordsArray[i + 1]) {
-    //           finalI = j;
-    //           console.log('matchcount ist 0 und finalI ist: ' + finalI);
-    //           break;
-    //         }
-    //       }
-    //     }
-    //   }
-    //   for (let k = finalI; k < this.speechmaticsService.resultSpeechmaticsWordsArray.length; k++) {
-    //     const time_samples = Math.round(this.speechmaticsService.resultSpeechmaticsTimesArray[k] * this.transcrService.audiofile.samplerate);
-    //     // console.log('time: ' + this.speechmaticsService.resultSpeechmaticsTimesArray[k]);
-    //     // console.log('round: ' + time_samples);
-    //     // console.log('word: ' + this.speechmaticsService.resultSpeechmaticsWordsArray[k]);
-    //     // console.log('audiofile lastsample: ' + this.transcrService.last_sample);
-    //     if (!this.speechmaticsService.resultSpeechmaticsTimesArray[k]) {
-    //       resultString += this.speechmaticsService.resultSpeechmaticsWordsArray[k];
-    //     } else {
-    //       resultString += this.speechmaticsService.resultSpeechmaticsWordsArray[k] + '{' + time_samples + '}';
-    //     }
-    //   }
-    //   this.rawText = resultString;
-    //   // this.typing.emit('stopped');
-    //   this.speechmaticsinserted.emit();
-    // } else {
-    //   console.log('There were already as many or more words transcribed than speech recognition could provide.');
-    // }
+    this.rawText = resultString;
+    this.speechmaticsinserted.emit();
   }
 
   insertBoundary(img_url: string) {
@@ -1365,65 +1306,59 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
 
     if (!this.audiochunk.isPlaying) {
       let segmentIndex;
-      // if (this.audiochunk.time.duration.samples < this.transcrService.audiofile.duration) {
-      //   segmentIndex = this.getSegmentByCaretPos(this.caretpos);
-      // } else {
-        segmentIndex = this.transcrService.currentlevel.segments.getSegmentBySamplePosition(this.audiochunk.time.end.samples);
-      // }
-      console.log('Segment index by sample position: ' + segmentIndex);
-      let segmentStart = 0;
       let samples = 0;
+      let segmentStart = 0;
+      if (this.audiochunk.time.duration.samples < this.transcrService.audiofile.duration) {
+        segmentIndex = this.transcrService.currentlevel.segments.getSegmentBySamplePosition(this.audiochunk.time.end.samples);
+      } else {
+        segmentIndex = this.getSegmentByCaretPos(this.caretpos);
+      }
+      console.log('Segment index by sample position: ' + segmentIndex);
+
       let temporaryIndex;
-
       console.log(this.transcrService.currentlevel.segments.get(segmentIndex - 1) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(segmentIndex - 1)).length > 1);
-        console.log('Caretpos: ' + caretpos);
-        // if (segment.transcript) {
-        //   console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
-        //
-        //   const lengthOfCurrentSegment = segment.transcript.length;
-        //   console.log('Length of transcript of current segment: ' + lengthOfCurrentSegment);
-        //
-        //   const wordsOfSegment = this.wordsService.getWordsPerSegment(segment).length;
-        //   console.log('Words of segment: ' + wordsOfSegment);
-        //
-        //   samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfCurrentSegment, wordsOfSegment, true, this.transcrService.audiofile.samplerate);
-        //   // const samples = (seg_num > 0) ? this.transcrService.currentlevel.segments.get(seg_num - 1).time.samples : 0;
-        //   console.log('Samples aus gespeichertem segment: ' + samples);
-        // }
-        // else
-        for (let i = 1; i < this.transcrService.currentlevel.segments.length; i++) {
-          if (this.transcrService.currentlevel.segments.get(segmentIndex - i) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(segmentIndex - i)).length > 1) {
-            temporaryIndex = segmentIndex - i;
-            console.log('temporaryIndex: ' + temporaryIndex);
-            break;
-          }
-        }
-        if (temporaryIndex >= 0) {
+      console.log('Caretpos: ' + caretpos);
+      // Go through segments and look for previous segments that contain at least 2 words
+      for (let i = 1; i < this.transcrService.currentlevel.segments.length; i++) {
+        if (this.transcrService.currentlevel.segments.get(segmentIndex - i) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(segmentIndex - i)).length > 1) {
+          temporaryIndex = segmentIndex - i;
           console.log('temporaryIndex: ' + temporaryIndex);
-
-          const segment = this.transcrService.currentlevel.segments.get(temporaryIndex);
-
-          console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
-
-          const lengthOfPreviousSegment = segment.transcript.length;
-          console.log('Length of transcript of previous segment: ' + lengthOfPreviousSegment);
-
-          const wordsOfPreviousSegment = this.wordsService.getWordsPerSegment(segment).length;
-          console.log('Words of segment: ' + wordsOfPreviousSegment);
-
-          samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfPreviousSegment, wordsOfPreviousSegment, false, this.transcrService.audiofile.samplerate);
-          console.log('Samples aus ungespeichertem Segment: ' + samples);
+          break;
         }
+      }
+      if (temporaryIndex >= 0) {
+        console.log('temporaryIndex: ' + temporaryIndex);
+
+        const segment = this.transcrService.currentlevel.segments.get(temporaryIndex);
+
+        console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
+
+        const lengthOfPreviousSegment = segment.transcript.length;
+        console.log('Length of transcript of previous segment: ' + lengthOfPreviousSegment);
+
+        const wordsOfPreviousSegment = this.wordsService.getWordsPerSegment(segment).length;
+        console.log('Words of segment: ' + wordsOfPreviousSegment);
+
+        samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfPreviousSegment, wordsOfPreviousSegment, false, this.transcrService.audiofile.samplerate);
+        console.log('Samples aus ungespeichertem Segment: ' + samples);
+      }
       if (samples) {
         if (this.transcrService.currentlevel.segments.get(segmentIndex - 1)) {
           segmentStart = this.transcrService.currentlevel.segments.get(segmentIndex - 1).time.samples;
         }
 
-        const newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
+        let newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
+        if (this.audiochunk.time.duration.samples >= this.transcrService.audiofile.duration) {
+          let caretposAdjust = 0;
+          for (let i = 0; i < segmentIndex; i++) {
+            caretposAdjust += this.transcrService.currentlevel.segments.segments[i].transcript.length;
+          }
+          newStartSamplePosition = Math.round((caretpos - caretposAdjust - 2 * segmentIndex) * samples + segmentStart);
+        }
         console.log('New start sample position: ' + newStartSamplePosition);
 
         const start = new AudioTime(newStartSamplePosition, this.audiochunk.audiomanager.ressource.info.samplerate);
-        if (start.samples < this.audiochunk.selection.end.samples) {
+        if (start.samples < this.transcrService.currentlevel.segments.get(segmentIndex).time.samples) {
           this.playpositionchanged.emit(start);
         }
         console.log('this.audiochunk.selection.start: ' + this.audiochunk.selection.start);

@@ -460,8 +460,8 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   onPlaypositionChanged(start) {
-    // this.audiochunk.startpos = start;
-    // this.audioplayer.update();
+    this.audiochunk.startpos = start;
+    this.audioplayer.update();
   }
 
   private loadEditor() {
