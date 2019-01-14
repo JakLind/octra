@@ -12,13 +12,6 @@ export class SpeechmaticsService {
   set transcriptionReady(value: boolean) {
     this._transcriptionReady = value;
   }
-  get transcriptionInserted(): boolean {
-    return this._transcriptionInserted;
-  }
-
-  set transcriptionInserted(value: boolean) {
-    this._transcriptionInserted = value;
-  }
   get jobStatus(): string {
     return this._jobStatus;
   }
@@ -90,7 +83,6 @@ export class SpeechmaticsService {
   private _resultSpeechmaticsTimesArray: any[];
   private resultSpeechmaticsDurationsArray: any[];
   private _transcriptionRequested: boolean;
-  private _transcriptionInserted: boolean;
   private _transcriptionReady: boolean;
 
   postSpeechmaticsJob() {
@@ -173,7 +165,6 @@ export class SpeechmaticsService {
     for (let i = 0; i < this._wordsOfSpeechmaticsTranscription.length; i++) {
       allWords[i] = this._wordsOfSpeechmaticsTranscription[i].name;
     }
-    // const resultSpeechmatics = allWords.join(' ');
     const resultSpeechmatics = allWords;
     return resultSpeechmatics;
   }
@@ -214,15 +205,6 @@ export class SpeechmaticsService {
       case 429:
         console.log('Too many requests were sent to speech recognition. Please try again later. ' + error.error.error);
         break;
-      // case 500:
-      //   console.log('There is a problem with the speech recognition server.Please try again later. ' + error.error.error);
-      //   break;
-      // case 502:
-      //   console.log('The speech recognition server is not active at present. Please try again later. ' + error.error.error);
-      //   break;
-      // case 503:
-      //   console.log('The speech recognition service is temporarily unavailable. Please try again later. ' + error.error.error);
-      //   break;
       default:
         console.log(error);
     }

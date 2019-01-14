@@ -12,12 +12,9 @@ export class WordsService {
   }
 
   private _wordArray = [];
-  // private wordsInTranscription: boolean;
   private wordPerSegmentArray = [];
-  // private wordsInSegment: boolean;
   private samplesPerWordOfFullTranscription: number;
   private samplesPerWordOfSegment: number;
-  private samples = 0;
   private lastSamplesValue = 0;
 
   constructor() {
@@ -25,7 +22,6 @@ export class WordsService {
 
   getTotalWords(transcription: string) {
     if (transcription) {
-      // this.wordsInTranscription = true;
       this._wordArray = transcription.split(' ');
       console.log(this._wordArray);
       for (let i = 0; i <= this._wordArray.length; i++) {
@@ -36,15 +32,12 @@ export class WordsService {
       }
       return this._wordArray;
     } else {
-      // this.wordsInTranscription = false;
       return 'There is no transcription available, yet';
     }
   }
 
   getWordsPerSegment(segment: Segment) {
     this.wordPerSegmentArray = [];
-    // if (segment.transcript) {
-    //   this.wordsInSegment = true;
     this.wordPerSegmentArray = segment.transcript.split(' ');
     for (let i = 0; i <= this.wordPerSegmentArray.length; i++) {
       if (this.wordPerSegmentArray[i] === ('' || '<nib>')) {
@@ -53,10 +46,6 @@ export class WordsService {
       }
     }
     return this.wordPerSegmentArray;
-    // } else {
-    //   this.wordsInSegment = false;
-    //   return this.wordPerSegmentArray;
-    // }
   }
 
   getSamplesPerWordOfFullTranscription(segments: Segments) {
@@ -97,10 +86,6 @@ export class WordsService {
         return this.samplesPerWordOfSegment;
       }
     }
-    // } else {
-    //   return this.samplesPerWordOfSegment;
-    // }
-
   }
 
   getSamplesPerCharacter(lengthOfTranscription: number, totalWordsOfTranscription: number) {

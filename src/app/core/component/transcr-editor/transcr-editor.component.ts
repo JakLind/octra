@@ -1314,58 +1314,60 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
         segmentIndex = this.getSegmentByCaretPos(this.caretpos);
       }
       console.log('Segment index by sample position: ' + segmentIndex);
+      if (this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(segmentIndex)).length > 1) {
 
-      let temporaryIndex;
-      console.log(this.transcrService.currentlevel.segments.get(segmentIndex - 1) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(segmentIndex - 1)).length > 1);
-      console.log('Caretpos: ' + caretpos);
-      // Go through segments and look for previous segments that contain at least 2 words
-      for (let i = 1; i < this.transcrService.currentlevel.segments.length; i++) {
-        if (this.transcrService.currentlevel.segments.get(segmentIndex - i) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(segmentIndex - i)).length > 1) {
-          temporaryIndex = segmentIndex - i;
-          console.log('temporaryIndex: ' + temporaryIndex);
-          break;
-        }
-      }
-      if (temporaryIndex >= 0) {
-        console.log('temporaryIndex: ' + temporaryIndex);
-
-        const segment = this.transcrService.currentlevel.segments.get(temporaryIndex);
-
-        console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
-
-        const lengthOfPreviousSegment = segment.transcript.length;
-        console.log('Length of transcript of previous segment: ' + lengthOfPreviousSegment);
-
-        const wordsOfPreviousSegment = this.wordsService.getWordsPerSegment(segment).length;
-        console.log('Words of segment: ' + wordsOfPreviousSegment);
-
-        samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfPreviousSegment, wordsOfPreviousSegment, false, this.transcrService.audiofile.samplerate);
-        console.log('Samples aus ungespeichertem Segment: ' + samples);
-      }
-      if (samples) {
-        if (this.transcrService.currentlevel.segments.get(segmentIndex - 1)) {
-          segmentStart = this.transcrService.currentlevel.segments.get(segmentIndex - 1).time.samples;
-        }
-
-        let newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
-        if (this.audiochunk.time.duration.samples >= this.transcrService.audiofile.duration) {
-          let caretposAdjust = 0;
-          for (let i = 0; i < segmentIndex; i++) {
-            caretposAdjust += this.transcrService.currentlevel.segments.segments[i].transcript.length;
+        let temporaryIndex;
+        console.log(this.transcrService.currentlevel.segments.get(segmentIndex - 1) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(segmentIndex - 1)).length > 1);
+        console.log('Caretpos: ' + caretpos);
+        // Go through segments and look for previous segments that contain at least 2 words
+        for (let i = 1; i < this.transcrService.currentlevel.segments.length; i++) {
+          if (this.transcrService.currentlevel.segments.get(segmentIndex - i) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(segmentIndex - i)).length > 1) {
+            temporaryIndex = segmentIndex - i;
+            console.log('temporaryIndex: ' + temporaryIndex);
+            break;
           }
-          newStartSamplePosition = Math.round((caretpos - caretposAdjust - 2 * segmentIndex) * samples + segmentStart);
         }
-        console.log('New start sample position: ' + newStartSamplePosition);
+        if (temporaryIndex >= 0) {
+          console.log('temporaryIndex: ' + temporaryIndex);
 
-        const start = new AudioTime(newStartSamplePosition, this.audiochunk.audiomanager.ressource.info.samplerate);
-        if (start.samples < this.transcrService.currentlevel.segments.get(segmentIndex).time.samples) {
-          this.playpositionchanged.emit(start);
+          const segment = this.transcrService.currentlevel.segments.get(temporaryIndex);
+
+          console.log(this.wordsService.getSamplesPerWordOfSegment(segment, this.transcrService.currentlevel.segments));
+
+          const lengthOfPreviousSegment = segment.transcript.length;
+          console.log('Length of transcript of previous segment: ' + lengthOfPreviousSegment);
+
+          const wordsOfPreviousSegment = this.wordsService.getWordsPerSegment(segment).length;
+          console.log('Words of segment: ' + wordsOfPreviousSegment);
+
+          samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfPreviousSegment, wordsOfPreviousSegment, false, this.transcrService.audiofile.samplerate);
+          console.log('Samples aus ungespeichertem Segment: ' + samples);
         }
-        console.log('this.audiochunk.selection.start: ' + this.audiochunk.selection.start);
-        console.log('this.audiochunk.selection.end: ' + this.audiochunk.selection.end);
+        if (samples) {
+          if (this.transcrService.currentlevel.segments.get(segmentIndex - 1)) {
+            segmentStart = this.transcrService.currentlevel.segments.get(segmentIndex - 1).time.samples;
+          }
 
-      } else {
-        console.log('No characters in segment, yet.');
+          let newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
+          if (this.audiochunk.time.duration.samples >= this.transcrService.audiofile.duration) {
+            let caretposAdjust = 0;
+            for (let i = 0; i < segmentIndex; i++) {
+              caretposAdjust += this.transcrService.currentlevel.segments.segments[i].transcript.length;
+            }
+            newStartSamplePosition = Math.round((caretpos - caretposAdjust - 2 * segmentIndex) * samples + segmentStart);
+          }
+          console.log('New start sample position: ' + newStartSamplePosition);
+
+          const start = new AudioTime(newStartSamplePosition, this.audiochunk.audiomanager.ressource.info.samplerate);
+          if (start.samples < this.transcrService.currentlevel.segments.get(segmentIndex).time.samples) {
+            this.playpositionchanged.emit(start);
+          }
+          console.log('this.audiochunk.selection.start: ' + this.audiochunk.selection.start);
+          console.log('this.audiochunk.selection.end: ' + this.audiochunk.selection.end);
+
+        } else {
+          console.log('No characters in segment, yet.');
+        }
       }
     }
   }
