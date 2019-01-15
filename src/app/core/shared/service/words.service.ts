@@ -37,15 +37,19 @@ export class WordsService {
   }
 
   getWordsPerSegment(segment: Segment) {
-    this.wordPerSegmentArray = [];
-    this.wordPerSegmentArray = segment.transcript.split(' ');
-    for (let i = 0; i <= this.wordPerSegmentArray.length; i++) {
-      if (this.wordPerSegmentArray[i] === ('' || '<nib>')) {
-        this.wordPerSegmentArray.splice(i, 1);
-        i--;
+    if (segment) {
+      this.wordPerSegmentArray = [];
+      this.wordPerSegmentArray = segment.transcript.split(' ');
+      for (let i = 0; i <= this.wordPerSegmentArray.length; i++) {
+        if (this.wordPerSegmentArray[i] === ('' || '<nib>')) {
+          this.wordPerSegmentArray.splice(i, 1);
+          i--;
+        }
       }
+      return this.wordPerSegmentArray;
+    } else {
+      return 'Segment undefined!';
     }
-    return this.wordPerSegmentArray;
   }
 
   getSamplesPerWordOfFullTranscription(segments: Segments) {

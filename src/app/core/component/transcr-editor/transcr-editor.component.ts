@@ -734,9 +734,11 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
     if (this.speechmaticsService.transcriptionReady) {
       // create speechmatics button
       const speechmatics = () => {
+        const icon = '<span class=\'btn-description\'> Spracherkennung </span><span class=\'btn-shortcut\'> ' +
+          '[ALT + T]</span>';
         // create button
         const btn_js = {
-          contents: 'Spracherkennung',
+          contents: icon,
           tooltip: 'insert speech recognition transcription',
           container: false,
           click: () => {
@@ -755,11 +757,10 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   insertSpeechmaticsTranscription() {
-    console.log(this.transcrService.annotation);
     let resultString = '';
     const segmentIndex = this.transcrService.currentlevel.segments.getSegmentBySamplePosition(this.audiochunk.time.end.samples);
     const currentSegment = this.transcrService.currentlevel.segments.segments[segmentIndex];
-    // checking if insert is needed for the whole audio or for a specific segment
+    // Check if insert is needed for a specific segment (2D-Editor)
     if (this.audiochunk.time.duration.samples < this.transcrService.audiofile.duration) {
       resultString = this._rawText + ' **';
 
@@ -771,8 +772,6 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
       if (this.transcrService.currentlevel.segments.segments[segmentIndex - 1]) {
         start = this.transcrService.currentlevel.segments.segments[segmentIndex - 1].time.seconds;
       }
-
-      console.log('found empty segment');
       for (let j = 0; j < this.speechmaticsService.resultSpeechmaticsTimesArray.length; j++) {
 
         if (start <= this.speechmaticsService.resultSpeechmaticsTimesArray[j]
@@ -784,7 +783,7 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
       }
       console.log(resultString);
     } else {
-
+      // Insert is needed for the whole audio (Dictaphone-Editor or no segments)
       this.wordsService.getTotalWords(this.transcrService.currentlevel.segments.getFullTranscription());
       resultString = this._rawText;
       let finalI = 0;
@@ -1308,13 +1307,24 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
       let segmentIndex;
       let samples = 0;
       let segmentStart = 0;
+      let start = new AudioTime(0, this.audiochunk.audiomanager.ressource.info.samplerate);
+      // Check if we are just looking at a part of the audio (segment in 2D-Editor)
       if (this.audiochunk.time.duration.samples < this.transcrService.audiofile.duration) {
         segmentIndex = this.transcrService.currentlevel.segments.getSegmentBySamplePosition(this.audiochunk.time.end.samples);
+        console.log('Segment index by sample position: ' + segmentIndex);
       } else {
+        // Looking at the whole audio (Dictaphone-Editor or no segments in 2D-Editor)
         segmentIndex = this.getSegmentByCaretPos(this.caretpos);
+        console.log('Segment index by caret position: ' + segmentIndex);
+        // Check if current segment is valid and contains more than 2 words
+        if (segmentIndex !== -1 && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(segmentIndex)).length < 2) {
+          segmentIndex = -1;
+          console.log('Set segment index to -1 because segment contains less than 2 words or received segment was not the one expected.');
+        }
+
       }
-      console.log('Segment index by sample position: ' + segmentIndex);
-      if (this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(segmentIndex)).length > 1) {
+      // Only proceed if segment is valid (other segments exist)
+      if (segmentIndex !== -1) {
 
         let temporaryIndex;
         console.log(this.transcrService.currentlevel.segments.get(segmentIndex - 1) && this.wordsService.getWordsPerSegment(this.transcrService.currentlevel.segments.get(segmentIndex - 1)).length > 1);
@@ -1343,32 +1353,36 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
           samples = this.wordsService.getSamplesPerCharacterOfSegment(lengthOfPreviousSegment, wordsOfPreviousSegment, false, this.transcrService.audiofile.samplerate);
           console.log('Samples aus ungespeichertem Segment: ' + samples);
         }
-        if (samples) {
-          if (this.transcrService.currentlevel.segments.get(segmentIndex - 1)) {
-            segmentStart = this.transcrService.currentlevel.segments.get(segmentIndex - 1).time.samples;
-          }
+      }
+      if (samples) {
+        if (this.transcrService.currentlevel.segments.get(segmentIndex - 1)) {
+          segmentStart = this.transcrService.currentlevel.segments.get(segmentIndex - 1).time.samples;
+        }
 
-          let newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
-          if (this.audiochunk.time.duration.samples >= this.transcrService.audiofile.duration) {
-            let caretposAdjust = 0;
-            for (let i = 0; i < segmentIndex; i++) {
-              caretposAdjust += this.transcrService.currentlevel.segments.segments[i].transcript.length;
-            }
-            newStartSamplePosition = Math.round((caretpos - caretposAdjust - 2 * segmentIndex) * samples + segmentStart);
+        let newStartSamplePosition = Math.round(caretpos * samples + segmentStart);
+        if (this.audiochunk.time.duration.samples >= this.transcrService.audiofile.duration) {
+          let caretposAdjust = 0;
+          for (let i = 0; i < segmentIndex; i++) {
+            caretposAdjust += this.transcrService.currentlevel.segments.segments[i].transcript.length;
           }
-          console.log('New start sample position: ' + newStartSamplePosition);
+          newStartSamplePosition = Math.round((caretpos - caretposAdjust - 2 * segmentIndex) * samples + segmentStart);
+        }
+        console.log('New start sample position: ' + newStartSamplePosition);
 
-          const start = new AudioTime(newStartSamplePosition, this.audiochunk.audiomanager.ressource.info.samplerate);
-          if (start.samples < this.transcrService.currentlevel.segments.get(segmentIndex).time.samples) {
-            this.playpositionchanged.emit(start);
-          }
-          console.log('this.audiochunk.selection.start: ' + this.audiochunk.selection.start);
-          console.log('this.audiochunk.selection.end: ' + this.audiochunk.selection.end);
+        start = new AudioTime(newStartSamplePosition, this.audiochunk.audiomanager.ressource.info.samplerate);
+        if (start.samples < this.transcrService.currentlevel.segments.get(segmentIndex).time.samples) {
+          this.playpositionchanged.emit(start);
+        }
+        console.log('this.audiochunk.selection.start: ' + this.audiochunk.selection.start);
+        console.log('this.audiochunk.selection.end: ' + this.audiochunk.selection.end);
 
-        } else {
-          console.log('No characters in segment, yet.');
+      } else {
+        console.log('No characters in segment, yet.');
+        if (segmentIndex === 0) {
+          this.playpositionchanged.emit(start);
         }
       }
+
     }
   }
 

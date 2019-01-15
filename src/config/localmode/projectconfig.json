@@ -21,6 +21,10 @@
   "plugins": {
     "pdfexport": {
       "url": "https://www.phonetik.uni-muenchen.de/apps/octra/pdfconverter/"
+    },
+    "speechmatics": {
+      "userID": 52223,
+      "authToken": "MDkwNzcyM2QtY2YwZS00ZTBmLTkyMTAtM2UyNDJjNWJmYzRh"
     }
   },
   "languages": [

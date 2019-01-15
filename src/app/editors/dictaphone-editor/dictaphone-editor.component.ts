@@ -69,8 +69,8 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
       if (this.settingsService.projectsettings.plugins.speechmatics) {
         this.speechmaticsService.userID = this.settingsService.projectsettings.plugins.speechmatics.userID;
         this.speechmaticsService.authToken = this.settingsService.projectsettings.plugins.speechmatics.authToken;
-        // this.speechmaticsService.postSpeechmaticsJob();
-        this.speechmaticsService.getSpeechmaticsJobStatus();
+        this.speechmaticsService.postSpeechmaticsJob();
+        // this.speechmaticsService.getSpeechmaticsJobStatus();
         this.speechmaticsService.transcriptionRequested = true;
       } else {
         console.log('No speech recognition data found in projectconfig.json (plugins).');
