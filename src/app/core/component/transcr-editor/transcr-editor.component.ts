@@ -731,27 +731,34 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
 
     result.push(fontSizeDown);
 
-    if (this.speechmaticsService.transcriptionReady) {
-      // create speechmatics button
-      const speechmatics = () => {
-        const icon = '<span class=\'btn-description\'> Spracherkennung </span><span class=\'btn-shortcut\'> ' +
+
+    // create speechmatics button
+    const speechmatics = () => {
+      let icon;
+      icon = '<span class=\'fa fa-spinner fa-spin fa-lg fa-fw\'></span><span class=\'btn-description btn-warning\'> Spracherkennung </span>';
+
+      if (this.speechmaticsService.transcriptionReady) {
+        icon = '<span class=\'fa fa-check-square fa-lg fa-fw btn-outline-success\'></span><span class=\'btn-description\'> Spracherkennung </span><span class=\'btn-shortcut\'> ' +
           '[ALT + T]</span>';
-        // create button
-        const btn_js = {
-          contents: icon,
-          tooltip: 'insert speech recognition transcription',
-          container: false,
-          click: () => {
+      }
+      // create button
+      const btn_js = {
+        contents: icon,
+        tooltip: 'insert speech recognition transcription',
+        container: false,
+        click: () => {
+          if (this.speechmaticsService.transcriptionReady) {
             this.insertSpeechmaticsTranscription();
           }
-        };
-        const button = jQuery.summernote.ui.button(btn_js);
-
-        return button.render();   // return button as jquery object
+        }
       };
+      const button = jQuery.summernote.ui.button(btn_js);
 
-      result.push(speechmatics);
-    }
+      return button.render();   // return button as jquery object
+    };
+
+    result.push(speechmatics);
+
 
     return result;
   }
@@ -1370,6 +1377,7 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
         console.log('New start sample position: ' + newStartSamplePosition);
 
         start = new AudioTime(newStartSamplePosition, this.audiochunk.audiomanager.ressource.info.samplerate);
+        //TODO: Fix here
         if (start.samples < this.transcrService.currentlevel.segments.get(segmentIndex).time.samples) {
           this.playpositionchanged.emit(start);
         }
