@@ -802,7 +802,7 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
         resultString += ' **';
         // Check last 5 words of fullTranscription and compare them with first 5 of speechmatics transcription
         let matchCount = 0;
-        const startI = Math.abs(5 - this.wordsService.wordArray.length);
+        const startI = Math.abs(20 - this.wordsService.wordArray.length);
         for (let i = startI; i < this.wordsService.wordArray.length; i++) {
           for (let j = startI; j < this.wordsService.wordArray.length; j++) {
             console.log(this.wordsService.wordArray[i]);
