@@ -1,7 +1,6 @@
 import {HttpClient, HttpRequest} from '@angular/common/http';
 import {EventEmitter, Injectable} from '@angular/core';
 import {SettingsService} from './settings.service';
-import {AppStorageService} from './appstorage.service';
 
 @Injectable()
 export class SpeechmaticsService {
@@ -66,8 +65,7 @@ export class SpeechmaticsService {
 
 
   constructor(private http: HttpClient,
-              public settingsService: SettingsService,
-              public appStorageService: AppStorageService) {}
+              public settingsService: SettingsService) {}
 
   private proxyurl = 'https://cors-anywhere.herokuapp.com/';
   private _userID;
