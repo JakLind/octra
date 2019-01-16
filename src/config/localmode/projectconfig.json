@@ -23,8 +23,8 @@
       "url": "https://www.phonetik.uni-muenchen.de/apps/octra/pdfconverter/"
     },
     "speechmatics": {
-      "userID": 52223,
-      "authToken": "MDkwNzcyM2QtY2YwZS00ZTBmLTkyMTAtM2UyNDJjNWJmYzRh"
+      "userID": 0,
+      "authToken": ""
     }
   },
   "languages": [
@@ -34,8 +34,7 @@
   "interfaces": [
     "Dictaphone Editor",
     "Linear Editor",
-    "2D-Editor",
-    "Speech-to-text Editor"
+    "2D-Editor"
   ],
   "feedback_form": [
     {

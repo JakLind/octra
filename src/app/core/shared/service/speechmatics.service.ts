@@ -73,7 +73,6 @@ export class SpeechmaticsService {
   private _userID;
   private _authToken;
   private _wordsOfSpeechmaticsTranscription;
-  private audiofile = this.appStorageService.file;
   private jobID: number;
   private _jobStatus: string;
   private resultOfPOST: string;
@@ -85,10 +84,10 @@ export class SpeechmaticsService {
   private _transcriptionRequested: boolean;
   private _transcriptionReady: boolean;
 
-  postSpeechmaticsJob() {
+  postSpeechmaticsJob(audiofile) {
     const params = new FormData();
-    params.append('model',  'de');
-    params.append('data_file', this.audiofile, this.audiofile.name);
+    params.append('model', 'de');
+    params.append('data_file', audiofile, this.settingsService.filename);
     params.append('diarisation', 'false');
 
     const req = new HttpRequest(

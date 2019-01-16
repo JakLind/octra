@@ -122,11 +122,15 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
   }
 
   ngOnInit() {
+    this.audiomanager = this.audio.audiomanagers[0];
+    this.audiochunk_lines = this.audiomanager.mainchunk.clone();
+    this.audiochunk_loupe = this.audiomanager.mainchunk.clone();
+    this.audiochunk_window = this.audiomanager.mainchunk.clone();
     if (!this.speechmaticsService.transcriptionRequested) {
       if (this.settingsService.projectsettings.plugins.speechmatics) {
         this.speechmaticsService.userID = this.settingsService.projectsettings.plugins.speechmatics.userID;
         this.speechmaticsService.authToken = this.settingsService.projectsettings.plugins.speechmatics.authToken;
-        this.speechmaticsService.postSpeechmaticsJob();
+        this.speechmaticsService.postSpeechmaticsJob(this.audiomanager.ressource.info.file);
         // this.speechmaticsService.getSpeechmaticsJobStatus();
         this.speechmaticsService.transcriptionRequested = true;
       } else {
@@ -135,10 +139,6 @@ export class TwoDEditorComponent implements OnInit, AfterViewInit, AfterContentC
     } else {
       console.log('Sent audio to speech recognition already.');
     }
-    this.audiomanager = this.audio.audiomanagers[0];
-    this.audiochunk_lines = this.audiomanager.mainchunk.clone();
-    this.audiochunk_loupe = this.audiomanager.mainchunk.clone();
-    this.audiochunk_window = this.audiomanager.mainchunk.clone();
     this.shortcuts = this.keyMap.register('2D-Editor', this.viewer.Settings.shortcuts);
     const window_shortcuts = {
       jump_left: {

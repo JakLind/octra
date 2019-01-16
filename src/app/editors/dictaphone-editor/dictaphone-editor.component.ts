@@ -65,11 +65,15 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   ngOnInit() {
+    this.audiomanager = this.audio.audiomanagers[0];
+    this.audiochunk = this.audiomanager.mainchunk.clone();
+    this.audiochunk.speed = 1;
+    this.audiochunk.volume = 1;
     if (!this.speechmaticsService.transcriptionRequested) {
       if (this.settingsService.projectsettings.plugins.speechmatics) {
         this.speechmaticsService.userID = this.settingsService.projectsettings.plugins.speechmatics.userID;
         this.speechmaticsService.authToken = this.settingsService.projectsettings.plugins.speechmatics.authToken;
-        this.speechmaticsService.postSpeechmaticsJob();
+        this.speechmaticsService.postSpeechmaticsJob(this.audiomanager.ressource.info.file);
         // this.speechmaticsService.getSpeechmaticsJobStatus();
         this.speechmaticsService.transcriptionRequested = true;
       } else {
@@ -78,10 +82,6 @@ export class DictaphoneEditorComponent implements OnInit, OnDestroy, AfterViewIn
     } else {
       console.log('Sent audio to speech recognition already.');
     }
-    this.audiomanager = this.audio.audiomanagers[0];
-    this.audiochunk = this.audiomanager.mainchunk.clone();
-    this.audiochunk.speed = 1;
-    this.audiochunk.volume = 1;
     this.settings.shortcuts = this.keyMap.register('AP', this.settings.shortcuts);
     this.shortcuts = this.settings.shortcuts;
     this.editor.Settings.markers = this.transcrService.guidelines.markers.items;

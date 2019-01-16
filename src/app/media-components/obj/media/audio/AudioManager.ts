@@ -195,9 +195,7 @@ export class AudioManager {
       if (audioinfo !== null) {
         let buffer_copy = null;
 
-        if (keepbuffer) {
-          buffer_copy = buffer.slice(0);
-        }
+        buffer_copy = buffer.slice(0);
 
         const buffer_length = buffer.byteLength;
 
@@ -208,9 +206,9 @@ export class AudioManager {
           console.log(`original samplerate: ${audioinfo.samplerate}`);
           audioinfo = new AudioInfo(filename, type, buffer_length, audiobuffer.sampleRate,
             audiobuffer.length, audiobuffer.numberOfChannels, audioinfo.bitrate);
-
+          audioinfo.file = new File([buffer_copy], filename, {type: 'audio/wav'});
           result.ressource = new AudioRessource(filename, SourceType.ArrayBuffer,
-            audioinfo, (buffer_copy === null) ? buffer : buffer_copy, audiobuffer, buffer_length);
+            audioinfo, buffer, audiobuffer, buffer_length);
 
           // set duration is very important
           result.ressource.info.duration.samples = audiobuffer.length;
