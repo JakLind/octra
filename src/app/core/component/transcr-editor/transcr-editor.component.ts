@@ -735,7 +735,7 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
     // create speechmatics button
     const speechmatics = () => {
       let icon;
-      icon = '<span class=\'fa fa-spinner fa-spin fa-lg fa-fw\'></span><span class=\'btn-description btn-warning\'> Spracherkennung </span>';
+      icon = '<span class=\'fa fa-spinner fa-spin fa-lg fa-fw\'></span><span class=\'btn-description\'> Spracherkennung </span>';
 
       if (this.speechmaticsService.transcriptionReady) {
         icon = '<span class=\'fa fa-check-square fa-lg fa-fw btn-outline-success\'></span><span class=\'btn-description\'> Spracherkennung </span><span class=\'btn-shortcut\'> ' +
@@ -1370,17 +1370,29 @@ export class TranscrEditorComponent implements OnInit, OnDestroy, OnChanges {
         if (this.audiochunk.time.duration.samples >= this.transcrService.audiofile.duration) {
           let caretposAdjust = 0;
           for (let i = 0; i < segmentIndex; i++) {
-            caretposAdjust += this.transcrService.currentlevel.segments.segments[i].transcript.length;
+            if (this.transcrService.currentlevel.segments.segments[i]) {
+              caretposAdjust += this.transcrService.currentlevel.segments.segments[i].transcript.length;
+            }
           }
           newStartSamplePosition = Math.round((caretpos - caretposAdjust - 2 * segmentIndex) * samples + segmentStart);
+          start = new AudioTime(newStartSamplePosition, this.audiochunk.audiomanager.ressource.info.samplerate);
+          if (this.transcrService.currentlevel.segments.get(segmentIndex)) {
+            if (start.samples < this.transcrService.currentlevel.segments.get(segmentIndex).time.samples) {
+              this.playpositionchanged.emit(start);
+            }
+          }
+        } else {
+          start = new AudioTime(newStartSamplePosition, this.audiochunk.audiomanager.ressource.info.samplerate);
+          if (start.samples < this.audiochunk.selection.end.samples) {
+            this.playpositionchanged.emit(start);
+          }
         }
-        console.log('New start sample position: ' + newStartSamplePosition);
 
         start = new AudioTime(newStartSamplePosition, this.audiochunk.audiomanager.ressource.info.samplerate);
-        //TODO: Fix here
-        if (start.samples < this.transcrService.currentlevel.segments.get(segmentIndex).time.samples) {
+        if (start.samples < this.audiochunk.selection.end.samples) {
           this.playpositionchanged.emit(start);
         }
+        console.log('New start sample position: ' + newStartSamplePosition);
         console.log('this.audiochunk.selection.start: ' + this.audiochunk.selection.start);
         console.log('this.audiochunk.selection.end: ' + this.audiochunk.selection.end);
 

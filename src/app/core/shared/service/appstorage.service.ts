@@ -363,7 +363,7 @@ export class AppStorageService {
   private _usemode: 'local' | 'online' | 'url' = null;
   private _language = 'en';
   private _version: string = null;
-  private _logging = false;
+  private _logging = true;
   private _show_loupe = true;
   private _prompttext = '';
   private _url_params: any = {};
