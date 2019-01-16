@@ -1,7 +1,6 @@
 import {TwoDEditorComponent} from './2D-editor/2D-editor.component';
 import {LinearEditorComponent} from './linear-editor/linear-editor.component';
 import {DictaphoneEditorComponent} from './dictaphone-editor/dictaphone-editor.component';
-import {SpeechToTextEditorComponent} from './speech-to-text-editor/speech-to-text-editor.component';
 
 export const EditorComponents = [
   {
